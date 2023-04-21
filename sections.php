@@ -1,11 +1,11 @@
 <?php
-$title = "Sections";
+$title = "Section Administration";
 require_once('head.php');
 ?>
 
 <body>
 	<div class="container">
-		<h1>Section Administration</h1>
+		<h1><?php echo $title ?></h1>
 
 		<div class="card">
 			<div class="card-header">Brass</div>

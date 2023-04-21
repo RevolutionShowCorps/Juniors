@@ -58,15 +58,13 @@ $member = array(
 	)
 );
 
-$name = $member['firstName'] . " " . $member['lastName'];
-$title = $name;
-
+$title = $member['firstName'] . " " . $member['lastName'];
 require_once('head.php');
 ?>
 	<body>
 		<div class="container">
 			<h1>
-				<?php echo $name ?>
+				<?php echo $title ?>
 			</h1>
 			<p><a href="subs.php">Subs balance: £0 &gt;</a></p>
 			<div class="card mb-3">
