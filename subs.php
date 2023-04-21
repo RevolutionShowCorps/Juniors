@@ -62,6 +62,36 @@ $name = "Luke Taylor";
 			<hr />
 
 			<h3>Transactions</h3>
+
+			<div class="row row-cols-1 row-cols-md-2 row-cols-lg-4">
+				<?php for($i = 0; $i < 6; $i++){ ?>
+				<div class="col">
+					<div class="card card-body text-center mb-3">
+						<h4>20/04/2023</h4>
+						<table class="table details">
+							<tbody>
+								<tr>
+									<td>Opening Balance</td>
+									<td>£0.00</td>
+								</tr>
+								<tr>
+									<td>Top Up (cash)</td>
+									<td class="text-success">+£3.00</td>
+								</tr>
+								<tr>
+									<td>Subs (weekly)</td>
+									<td class="text-danger">-£3.00</td>
+								</tr>
+								<tr>
+									<td>Closing Balance</td>
+									<td>£0.00</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</div>
+				<?php } ?>
+			</div>
 		</div>
 	</body>
 
