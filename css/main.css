@@ -22,3 +22,12 @@ table.details td:nth-child(1) {
 .card-status .card-body{
 	font-size: 5rem;
 }
+
+.card-header.button-header{
+	display: flex;
+	align-items: center;
+}
+
+.card-header.button-header .btn{
+	margin-left: auto;
+}

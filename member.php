@@ -209,7 +209,7 @@ require_once('head.php');
 
 				<div class="col">
 					<div class="card">
-						<div class="card-header d-flex align-items-center">Doctor <button class="btn btn-primary ms-auto">Edit</button></div>
+						<div class="card-header button-header">Doctor <button class="btn btn-primary">Edit</button></div>
 						<table class="table table-hover details">
 							<tbody>
 								<tr>
