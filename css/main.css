@@ -31,3 +31,14 @@ table.details td:nth-child(1) {
 .card-header.button-header .btn{
 	margin-left: auto;
 }
+
+@media (min-width: 992px) { 
+	/* hover doesn't really work on mobile devices! */
+	.hover{
+		display: none;
+	}
+	
+	:hover > .hover{
+		display: inline-block;
+	}
+}
