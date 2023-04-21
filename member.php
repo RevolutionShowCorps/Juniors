@@ -10,6 +10,7 @@
 		<style>
 			table.details td:nth-child(1) {
 				text-align: right;
+				font-weight: bold;
 			}
 
 			.card .table{
@@ -72,11 +73,27 @@
 							<?php echo $i ?>
 						</div>
 						<!-- <div class="card-body"> -->
-						<table class="table details">
+						<table class="table table-hover details">
 							<tbody>
 								<tr>
 									<td>Name</td>
 									<td>Ruth Taylor</td>
+								</tr>
+								<tr>
+									<td>Relationship</td>
+									<td>Mum</td>
+								</tr>
+								<tr>
+									<td>Mobile</td>
+									<td>01234567890</td>
+								</tr>
+								<tr>
+									<td>Landline</td>
+									<td>01234567890</td>
+								</tr>
+								<tr>
+									<td>Email</td>
+									<td><a href="mailto:test@mail.com">test@mail.com</a></td>
 								</tr>
 								<tr>
 									<td>Address</td>
