@@ -14,8 +14,8 @@ require_once('head.php');
 		</h2>
 
 		<div class="row row-cols-1 row-cols-md-3">
-			<div class="col">
-				<div class="card h-100 card-status text-bg-danger mb-3">
+			<div class="col mb-3">
+				<div class="card h-100 card-status text-bg-danger">
 					<div class="card-header">Current Balance</div>
 					<div class="card-body">
 						£0
@@ -26,8 +26,8 @@ require_once('head.php');
 				</div>
 			</div>
 
-			<div class="col">
-				<div class="card h-100 card-status text-bg-primary mb-3">
+			<div class="col mb-3">
+				<div class="card h-100 card-status text-bg-primary">
 					<div class="card-header">Subs Type</div>
 					<div class="card-body">
 						Weekly
@@ -38,8 +38,8 @@ require_once('head.php');
 				</div>
 			</div>
 
-			<div class="col">
-				<div class="card h-100 card-status text-bg-success mb-3">
+			<div class="col mb-3">
+				<div class="card h-100 card-status text-bg-success">
 					<div class="card-header">Total Paid</div>
 					<div class="card-body">
 						£500
