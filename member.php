@@ -1,3 +1,20 @@
+<?php
+$contacts = array(
+	array(
+		"name"=>"Ruth Taylor",
+		"relationship"=>"Mum",
+		"mobile"=>"07234567890",
+		"landline"=>"01234567890",
+		"email"=>"test@mail.com",
+		"address"=>array(
+			"line1"=>"A House",
+			"line2"=>"A Place",
+			"city"=>"A City",
+			"postcode"=>"POST CODE"
+		)
+	)
+);
+?>
 <!doctype html>
 <html lang="en">
 
@@ -66,41 +83,42 @@
 			</div>
 
 			<div class="row row-cols-1 row-cols-lg-2">
-				<?php for($i = 1; $i <= 2; $i++){ ?>
+				<?php 
+					for($i = 0; $i < count($contacts); $i++){ 
+						$contact = $contacts[$i]; 
+				?>
 				<div class="col">
 					<div class="card mb-3">
-						<div class="card-header">Contact
-							<?php echo $i ?>
-						</div>
+						<div class="card-header">Contact <?php echo $i + 1 ?> </div>
 						<!-- <div class="card-body"> -->
 						<table class="table table-hover details">
 							<tbody>
 								<tr>
 									<td>Name</td>
-									<td>Ruth Taylor</td>
+									<td><?php echo $contact['name'] ?></td>
 								</tr>
 								<tr>
 									<td>Relationship</td>
-									<td>Mum</td>
+									<td><?php echo $contact['relationship'] ?></td>
 								</tr>
 								<tr>
 									<td>Mobile</td>
-									<td>01234567890</td>
+									<td><?php echo $contact['mobile'] ?></td>
 								</tr>
 								<tr>
 									<td>Landline</td>
-									<td>01234567890</td>
+									<td><?php echo $contact['landline'] ?></td>
 								</tr>
 								<tr>
 									<td>Email</td>
-									<td><a href="mailto:test@mail.com">test@mail.com</a></td>
+									<td><a href="mailto:<?php echo $contact['email'] ?>"><?php echo $contact['email'] ?></a></td>
 								</tr>
 								<tr>
 									<td>Address</td>
-									<td>A House<br />
-										A Place<br />
-										A City<br />
-										POST CODE
+									<td><?php echo $contact['address']['line1'] ?><br />
+										<?php echo $contact['address']['line2'] ?><br />
+										<?php echo $contact['address']['city'] ?><br />
+										<?php echo $contact['address']['postcode'] ?>
 									</td>
 								</tr>
 							</tbody>
