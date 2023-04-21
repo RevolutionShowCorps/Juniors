@@ -7,7 +7,7 @@ require_once('head.php');
 <body>
 	<div class="container">
 		<h1>Sub History</h1>
-		<h2 class="text-muted h4 fst-italic">
+		<h2 class="h4 fst-italic">
 			<a href="member.php">&lt;
 				<?php echo $name ?>
 			</a>

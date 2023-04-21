@@ -7,8 +7,12 @@ table.details td:nth-child(1) {
 	margin-bottom: 0;
 }
 
-.card .table tr:last-child {
+.card .table tbody tr:last-child {
 	border-bottom-color: transparent;
+}
+
+.card .table-bordered tr:first-child{
+	border-top-color: transparent;
 }
 
 .form-floating textarea.form-control {
@@ -30,6 +34,19 @@ table.details td:nth-child(1) {
 
 .card-header.button-header .btn{
 	margin-left: auto;
+}
+
+.alert{
+	text-align: center;
+}
+
+table.table-same-width{
+	width: 100%;
+	table-layout: fixed;
+}
+
+.text-muted{
+	opacity: 0.6;
 }
 
 @media (min-width: 992px) { 
