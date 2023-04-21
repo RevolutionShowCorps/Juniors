@@ -1,8 +1,27 @@
 <?php
-$title = "Event Administration";
-$year = 2023;
-$month = 4;
+function getLinkForMonth($date, $movement){
+	$target = clone $date;
+	$target->modify($movement . " month");
+	return "?month=" . $target->format("m") . "&year=" . $target->format("Y");
+}
+
+$today = new DateTime();
+
+if(isset($_GET['month'])){
+	$month = $_GET['month'];
+} else {
+	$month = $today->format("m");
+}
+
+if(isset($_GET['year'])){
+	$year = $_GET['year'];
+} else {
+	$year = $today->format("Y");
+}
+
 $date = new DateTime($year . "-" . $month . "-01");
+
+$title = "Event Administration";
 require_once('head.php');
 ?>
 
@@ -30,9 +49,17 @@ require_once('head.php');
 		<h2>Calendar</h2>
 		<div class="card text-center">
 			<div class="card-header fw-bold">
-				<a href="?prevMonth">&lt;</a>
-				April 2023
-				<a href="?nextMonth">&gt;</a>
+				<div class="row">
+					<div class="col-3 text-end">
+						<a href="<?php echo getLinkForMonth($date, -1) ?>">&lt;</a>
+					</div>
+					<div class="col-6">
+						<?php echo DateTime::createFromFormat("!m", $month)->format("F") . " " . $year ?>
+					</div>
+					<div class="col-3 text-start">
+						<a href="<?php echo getLinkForMonth($date, "+1") ?>">&gt;</a>
+					</div>
+				</div>
 			</div>
 			<table class="table table-bordered table-same-width">
 				<thead>
@@ -71,6 +98,13 @@ require_once('head.php');
 					<tr>
 						<?php
 						}
+					}
+
+					while($index > 0 && $index < 7){
+						$index++;
+						?>
+						<td class="text-muted">-</td>
+						<?php
 					}
 					?>
 					</tr>
