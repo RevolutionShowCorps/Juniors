@@ -78,6 +78,7 @@ $name = $member['firstName'] . " " . $member['lastName'];
 			<h1>
 				<?php echo $name ?>
 			</h1>
+			<p><a href="subs.php">Subs balance: £0 &gt;</a></p>
 			<div class="card mb-3">
 				<div class="card-header">Personal Details</div>
 				<div class="card-body">

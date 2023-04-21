@@ -14,3 +14,11 @@ table.details td:nth-child(1) {
 .form-floating textarea.form-control {
 	height: 5rem;
 }
+
+.card-status{
+	text-align: center;
+}
+
+.card-status .card-body{
+	font-size: 5rem;
+}
