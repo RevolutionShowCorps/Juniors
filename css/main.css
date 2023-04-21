@@ -1,0 +1,16 @@
+table.details td:nth-child(1) {
+	text-align: right;
+	font-weight: bold;
+}
+
+.card .table {
+	margin-bottom: 0;
+}
+
+.card .table tr:last-child {
+	border-bottom-color: transparent;
+}
+
+.form-floating textarea.form-control {
+	height: 5rem;
+}

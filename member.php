@@ -1,32 +1,64 @@
 <?php
-$contacts = array(
+
+$genders = array(
 	array(
-		"name"=>"Ruth Taylor",
-		"relationship"=>"Mum",
-		"mobile"=>"07234567890",
-		"landline"=>"01234567890",
-		"email"=>"test@mail.com",
-		"address"=>array(
-			"line1"=>"A House",
-			"line2"=>"A Place",
-			"city"=>"A City",
-			"postcode"=>"POST CODE"
-		)
+		"id"=>1,
+		"name"=>"Male"
 	),
 	array(
-		"name"=>"Steve Taylor",
-		"relationship"=>"Dad",
-		"mobile"=>"07234567890",
-		"landline"=>"01234567890",
-		"email"=>"test@mail.com",
-		"address"=>array(
-			"line1"=>"A House",
-			"line2"=>"A Place",
-			"city"=>"A City",
-			"postcode"=>"POST CODE"
-		)
+		"id"=>2,
+		"name"=>"Female"
 	)
 );
+
+$member = array(
+	"firstName"=>"Luke",
+	"lastName"=>"Taylor",
+	"gender"=>1,
+	"dateOfBirth"=>new DateTime("1999-04-09"),
+	"medical"=>"N/A",
+	"allergies"=>"N/A",
+	"lastTetanus"=>new DateTime("2012-01-01"),
+	"canDressWounds"=>true,
+	"canAdministerMedication"=>true,
+	"contacts"=> array(
+		array(
+			"firstName"=>"Ruth",
+			"lastName"=>"Taylor",
+			"relationship"=>"Mum",
+			"mobile"=>"07234567890",
+			"landline"=>"01234567890",
+			"email"=>"test@mail.com",
+			"address"=>array(
+				"line1"=>"A House",
+				"line2"=>"A Place",
+				"city"=>"A City",
+				"postcode"=>"POST CODE"
+			)
+		),
+		array(
+			"firstName"=>"Steve",
+			"lastName"=>"Taylor",
+			"relationship"=>"Dad",
+			"mobile"=>"07234567890",
+			"landline"=>"01234567890",
+			"email"=>"test@mail.com",
+			"address"=>array(
+				"line1"=>"A House",
+				"line2"=>"A Place",
+				"city"=>"A City",
+				"postcode"=>"POST CODE"
+			)
+		)
+	),
+	"doctor"=> array(
+		"name"=>"Doctor Who?",
+		"surgery"=>"A Surgery",
+		"phone"=>"01234567890"
+	)
+);
+
+$name = $member['firstName'] . " " . $member['lastName'];
 ?>
 <!doctype html>
 <html lang="en">
@@ -34,46 +66,32 @@ $contacts = array(
 	<head>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Luke Taylor | Revolution Juniors</title>
+		<title>
+			<?php echo $name ?> | Revolution Juniors
+		</title>
 		<link href="css/bootstrap.min.css" rel="stylesheet" />
-
-		<style>
-			table.details td:nth-child(1) {
-				text-align: right;
-				font-weight: bold;
-			}
-
-			.card .table {
-				margin-bottom: 0;
-			}
-
-			.card .table tr:last-child {
-				border-bottom-color: transparent;
-			}
-
-			.form-floating textarea.form-control {
-				height: 5rem;
-			}
-		</style>
+		<link href="css/main.css" rel="stylesheet" />
 	</head>
 
 	<body>
 		<div class="container">
-			<h1>Luke Taylor</h1>
+			<h1>
+				<?php echo $name ?>
+			</h1>
 			<div class="card mb-3">
 				<div class="card-header">Personal Details</div>
 				<div class="card-body">
 					<div class="row row-cols-1 row-cols-md-2">
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="text" class="form-control" id="fname" placeholder="First Name" value="Luke" required>
+								<input type="text" class="form-control" id="fname" placeholder="First Name" value="<?php echo $member['firstName'] ?>" required>
 								<label for="fname">First Name</label>
 							</div>
 						</div>
 
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="text" class="form-control" id="lname" placeholder="Last Name" value="Taylor" required>
+								<input type="text" class="form-control" id="lname" placeholder="Last Name" value="<?php echo $member['lastName'] ?>" required>
 								<label for="lname">Last Name</label>
 							</div>
 						</div>
@@ -82,8 +100,11 @@ $contacts = array(
 							<div class="form-floating mb-3">
 								<select class="form-select" id="gender" required>
 									<option value="">-- Please Select --</option>
-									<option value="1" selected>Male</option>
-									<option value="2">Female</option>
+									<?php foreach($genders as $gender){ ?>
+									<option value="<?php echo $gender['id'] ?>" <?php if($gender['id']==$member['gender']){?>selected<?php } ?>>
+										<?php echo $gender['name'] ?>
+									</option>
+									<?php } ?>
 								</select>
 								<label for="gender">Gender</label>
 							</div>
@@ -91,7 +112,7 @@ $contacts = array(
 
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="date" class="form-control" id="dob" placeholder="Date of Birth" value="1999-04-09" required>
+								<input type="date" class="form-control" id="dob" placeholder="Date of Birth" value="<?php echo $member['dateOfBirth']->format('Y-m-d') ?>" required>
 								<label for="dob">Date of Birth</label>
 							</div>
 						</div>
@@ -103,30 +124,30 @@ $contacts = array(
 				<div class="card-header">Medical Details</div>
 				<div class="card-body">
 					<div class="form-floating mb-3">
-						<textarea class="form-control" placeholder="E.g. Asthma" id="medical">N/A</textarea>
+						<textarea class="form-control" placeholder="E.g. Asthma" id="medical"><?php echo $member['medical'] ?></textarea>
 						<label for="medical">Medical Conditions</label>
 					</div>
 
 					<div class="form-floating mb-3">
-						<textarea class="form-control" placeholder="E.g.Nuts" id="allergies">N/A</textarea>
+						<textarea class="form-control" placeholder="E.g.Nuts" id="allergies"><?php echo $member['allergies'] ?></textarea>
 						<label for="allergies">Allergies</label>
 					</div>
 
 					<div class="row row-cols-1 row-cols-md-2">
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="date" class="form-control" id="tetanus" placeholder="Last Tetanus Jab" value="2012-01-01" required>
+								<input type="date" class="form-control" id="tetanus" placeholder="Last Tetanus Jab" value="<?php echo $member['lastTetanus']->format('Y-m-d') ?>" required>
 								<label for="tetanus">Last Tetanus Jab</label>
 							</div>
 						</div>
 
 						<div class="col">
 							<div class="form-check form-switch">
-								<input class="form-check-input" type="checkbox" role="switch" id="wounds" checked>
+								<input class="form-check-input" type="checkbox" role="switch" id="wounds" <?php if($member['canDressWounds']){?>checked<?php } ?>>
 								<label class="form-check-label" for="wounds">Consent to clean/dress wounds?</label>
 							</div>
 							<div class="form-check form-switch">
-								<input class="form-check-input" type="checkbox" role="switch" id="medication">
+								<input class="form-check-input" type="checkbox" role="switch" id="medication" <?php if($member['canAdministerMedication']){?>checked<?php } ?>>
 								<label class="form-check-label" for="medication">Consent to administer paracetamol/ibuprofen?</label>
 							</div>
 						</div>
@@ -134,10 +155,14 @@ $contacts = array(
 				</div>
 			</div>
 
+			<div class="text-center my-3">
+				<button class="btn btn-lg btn-success">Save</button>
+			</div>
+
 			<div class="row row-cols-1 row-cols-md-2">
 				<?php 
-					for($i = 0; $i < count($contacts); $i++){ 
-						$contact = $contacts[$i]; 
+					for($i = 0; $i < count($member['contacts']); $i++){ 
+						$contact = $member['contacts'][$i]; 
 				?>
 				<div class="col">
 					<div class="card mb-3">
@@ -149,7 +174,7 @@ $contacts = array(
 								<tr>
 									<td>Name</td>
 									<td>
-										<?php echo $contact['name'] ?>
+										<?php echo $contact['firstName'] . " " . $contact['lastName'] ?>
 									</td>
 								</tr>
 								<tr>
@@ -199,19 +224,19 @@ $contacts = array(
 								<tr>
 									<td>Name</td>
 									<td>
-										<?php echo $contact['name'] ?>
+										<?php echo $member['doctor']['name'] ?>
 									</td>
 								</tr>
 								<tr>
 									<td>Surgery</td>
 									<td>
-										<?php echo $contact['relationship'] ?>
+										<?php echo $member['doctor']['surgery'] ?>
 									</td>
 								</tr>
 								<tr>
 									<td>Phone</td>
 									<td>
-										<?php echo $contact['mobile'] ?>
+										<?php echo $member['doctor']['phone'] ?>
 									</td>
 								</tr>
 							</tbody>
