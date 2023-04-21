@@ -12,6 +12,19 @@ $contacts = array(
 			"city"=>"A City",
 			"postcode"=>"POST CODE"
 		)
+	),
+	array(
+		"name"=>"Steve Taylor",
+		"relationship"=>"Dad",
+		"mobile"=>"07234567890",
+		"landline"=>"01234567890",
+		"email"=>"test@mail.com",
+		"address"=>array(
+			"line1"=>"A House",
+			"line2"=>"A Place",
+			"city"=>"A City",
+			"postcode"=>"POST CODE"
+		)
 	)
 );
 ?>
