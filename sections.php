@@ -118,7 +118,7 @@ require_once('head.php');
 										continue;
 									}
 									?>
-								<div class="list-group-item"><?php echo $member['name'] ?> <span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member['name'] ?>" data-section="<?php echo $section['name'] ?>">Edit</a> | <a href="member.php">View</a></span></div>
+								<div class="list-group-item"><?php echo $member['name'] ?> <span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member['name'] ?>" data-section='{"name": "<?php echo $section['name'] ?>", "id": <?php echo $section['id'] ?>, "roleID": <?php echo $member['role']['id'] ?>}'>Edit</a> | <a href="member.php">View</a></span></div>
 								<?php } ?>
 								</div>
 						</div>
@@ -155,14 +155,14 @@ require_once('head.php');
 		<div class="modal-dialog modal-lg">
 			<div class="modal-content">
 				<div class="modal-header">
-					<h1 class="modal-title fs-4">Edit Sections for <span id="editName"></span></h1>
+					<h1 class="modal-title fs-4">Edit Section for <span id="editName"></span></h1>
 					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 				</div>
 				<div class="modal-body">
 					<p>Current section: <span class="fw-bold" id="editSection"></span></p>
 
 					<div class="form-floating mb-3">
-						<select class="form-select" id="section" required>
+						<select class="form-select" id="editNewSection" required>
 						  <option value="">-- Please Select --</option>
 						  <option value="1">Brass</option>
 						</select>
@@ -170,7 +170,7 @@ require_once('head.php');
 					</div>
 
 					<div class="form-floating mb-3">
-						<select class="form-select" id="role" required>
+						<select class="form-select" id="editRole" required>
 						  <option value="">-- Please Select --</option>
 						  <option value="1">Member</option>
 						  <option value="2">Instructor</option>
@@ -194,14 +194,18 @@ require_once('head.php');
 			backdrop: 'static'
 		});
 
+		function showEditModal(name, section){
+			document.getElementById("editName").innerHTML = name;
+			document.getElementById("editSection").innerHTML = section.name;
+			document.getElementById("editNewSection").value = section.id;
+			document.getElementById("editRole").value = section.roleID;
+			editModal.show();
+		}
+
 		Array.from(document.getElementsByClassName("edit-member")).forEach(el => el.addEventListener("click", e => {
 			e.preventDefault();
-			document.getElementById("editName").innerHTML = el.dataset.name;
-			document.getElementById("editSection").innerHTML = el.dataset.section;
-			editModal.show();
+			showEditModal(el.dataset.name, JSON.parse(el.dataset.section))
 		}));
-
-		//editModal.show();
 	</script>
 </body>
 
