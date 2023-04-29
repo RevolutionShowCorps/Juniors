@@ -1,5 +1,5 @@
 <?php
-require_once("DB.php");
+require_once(__DIR__ . "/lib/DB.php");
 session_start();
 
 function doLogin($email, $password){

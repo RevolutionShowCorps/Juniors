@@ -2,7 +2,7 @@
 
 class DB{
 	static function connect(){
-		require(__DIR__ . '/config.php');
+		require(__DIR__ . '/../config.php');
 		return new mysqli($config["DB_HOST"], $config["DB_USER"], $config["DB_PASS"], $config["DB_NAME"]);
 	}
 

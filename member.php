@@ -1,53 +1,21 @@
 <?php
 require_once("secure.php");
 
-require_once("DB.php");
+require_once(__DIR__ . "/lib/DB.php");
+require_once(__DIR__ . "/lib/Member.php");
+require_once(__DIR__ . "/lib/Validation.php");
+require_once(__DIR__ . "/lib/Utils.php");
 
 $validationErrors = array();
 
-function get_guid() {
-    $data = PHP_MAJOR_VERSION < 7 ? openssl_random_pseudo_bytes(16) : random_bytes(16);
-    $data[6] = chr(ord($data[6]) & 0x0f | 0x40);    // Set version to 0100
-    $data[8] = chr(ord($data[8]) & 0x3f | 0x80);    // Set bits 6-7 to 10
-    return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($data), 4));
-}
-
-function checkRequiredFields($fields, $array){
-	$validationErrors = array();
-
-	foreach($fields as $field){
-		if(!isset($array[$field]) || trim($array[$field]) == ""){
-			$validationErrors[$field] = "This field is required";
-		}
-	}
-
-	return $validationErrors;
-}
-
 function validateData(){
 	global $validationErrors;
-	$dates = array("dob", "tetanus");
-
-	$validationErrors = checkRequiredFields(array("fname", "lname", "gender", "dob"), $_POST);
-
-	foreach($dates as $dateField){
-		if(isset($_POST[$dateField])){
-			$test = new DateTime($_POST[$dateField]);
-			if($test == null){
-				$validationErrors[$dateField] = "Invalid date";
-			}
-		}
-	}
-
+	$validationErrors = array_merge(Validation::checkRequiredFields(array("fname", "lname", "gender", "dob"), $_POST), Validation::checkDateFields(array("dob", "tetanus"), $_POST));
 	return empty($validationErrors);
 }
 
-function createContact($con){
-	if(!empty(checkRequiredFields(array("fname", "lname", "relationship"), $_POST))){
-		return false;
-	}
-	
-	$contactID = get_guid();
+function createContact($con){	
+	$contactID = Utils::get_guid();
 	DB::executeQuery("INSERT INTO Contacts (ID, FirstName, LastName, Mobile, Landline, Email) VALUES (?, ?, ?, ?, ?, ?)", $con, "ssssss", $contactID, $_POST['fname'], $_POST['lname'], $_POST['mobile'], $_POST['landline'], $_POST['email']);
 
 	DB::executeQuery("INSERT INTO MemberContacts (MemberID, ContactID, RelationshipTypeID) VALUES (?, ?, ?)", $con, "ssi", $_GET['id'], $contactID, $_POST['relationship']);
@@ -56,10 +24,6 @@ function createContact($con){
 }
 
 function updateContact($con){
-	if(!empty(checkRequiredFields(array("fname", "lname", "relationship"), $_POST))){
-		return false;
-	}
-
 	$contact = DB::executeQueryForSingle("SELECT * FROM Contacts WHERE ID = ?", $con, "s", $_POST['contactID']);
 	if($contact == null){
 		return false;
@@ -68,28 +32,6 @@ function updateContact($con){
 	DB::executeQuery("UPDATE Contacts SET FirstName = ?, LastName = ?, Mobile = ?, Landline = ?, Email = ? WHERE ID = ?", $con, "ssssss", $_POST['fname'], $_POST['lname'], $_POST['mobile'], $_POST['landline'], $_POST['email'], $_POST['contactID']);
 
 	DB::executeQuery("UPDATE MemberContacts SET RelationshipTypeID = ? WHERE MemberID = ? AND ContactID = ?", $con, "iss", $_POST['relationship'], $_GET['id'], $_POST['contactID']);
-
-	return true;
-}
-
-function createDoctor($con){
-	if(!empty(checkRequiredFields(array("fname", "lname", "surgery"), $_POST))){
-		return false;
-	}
-
-	DB::executeQuery("INSERT INTO Doctors (FirstName, LastName, PhoneNumber, SurgeryName) VALUES (?, ?, ?, ?)", $con, "ssss", $_POST['fname'], $_POST['lname'], $_POST['phone'], $_POST['surgery']);
-
-	DB::executeQuery("UPDATE Members SET DoctorID = ? WHERE ID = ?", $con, "is", $con->insert_id, $_GET['id']);
-
-	return true;
-}
-
-function updateDoctor($con){
-	if(!empty(checkRequiredFields(array("fname", "lname", "surgery"), $_POST))){
-		return false;
-	}
-
-	DB::executeQuery("UPDATE Doctors SET FirstName = ?, LastName = ?, PhoneNumber = ?, SurgeryName = ? WHERE ID = ?", $con, "ssssi", $_POST['fname'], $_POST['lname'], $_POST['phone'], $_POST['surgery'], $_POST['doctorID']);
 
 	return true;
 }
@@ -103,7 +45,7 @@ function updateMember($con){
 		$_POST['tetanus'] = null;
 	}
 
-	DB::executeQuery("UPDATE Members SET FirstName = ?, LastName = ?, GenderID = ?, DateOfBirth = ?, MedicalDetails = ?, Allergies = ?, LastTetanus = ?, CanDressWounds = ?, CanAdministerMedication = ? WHERE ID = ?", $con, "ssissssiis", $_POST['fname'], $_POST['lname'], $_POST['gender'], $_POST['dob'], $_POST['medical'], $_POST['allergies'], $_POST['tetanus'], isset($_POST['wounds']), isset($_POST['medication']), $_GET['id']);
+	Member::update($_GET['id'], $_POST['fname'], $_POST['lname'], $_POST['gender'], $_POST['dob'], $_POST['medical'], $_POST['allergies'], $_POST['tetanus'], isset($_POST['wounds']), isset($_POST['medication']), $con);
 	
 	return true;
 }
@@ -114,7 +56,7 @@ if(!isset($_GET['id'])){
 } 
 $con = DB::connect();
 
-$member = DB::executeQueryForSingle("SELECT * FROM Members WHERE ID = ?", $con, "s", $_GET['id']);
+$member = Member::getByID($_GET['id'], $con);
 
 if($member == NULL){
 	header("Location: member.php");
@@ -126,18 +68,29 @@ if(!empty($_POST)){
 
 	if(isset($_POST['update'])){
 		$result = updateMember($con);
+
 	} else if(isset($_POST['contact'])){
-		if($_POST['contactID'] == -1){
-			$result = createContact($con);
-		} else {
-			$result = updateContact($con);
+		if(empty(Validation::checkRequiredFields(array("fname", "lname", "relationship"), $_POST))){
+			if($_POST['contactID'] == -1){
+				$result = createContact($con);
+			} else {
+				$result = updateContact($con);
+			}
 		}
+
 	} else if(isset($_POST['doctor'])){
-		if($_POST['doctorID'] == -1){
-			$result = createDoctor($con);
-		} else {
-			$result = updateDoctor($con);
+		if(empty(Validation::checkRequiredFields(array("fname", "lname", "surgery"), $_POST))){
+			if($_POST['doctorID'] == -1){
+				DB::executeQuery("INSERT INTO Doctors (FirstName, LastName, PhoneNumber, SurgeryName) VALUES (?, ?, ?, ?)", $con, "ssss", $_POST['fname'], $_POST['lname'], $_POST['phone'], $_POST['surgery']);
+
+				DB::executeQuery("UPDATE Members SET DoctorID = ? WHERE ID = ?", $con, "is", $con->insert_id, $_GET['id']);
+			} else {
+				DB::executeQuery("UPDATE Doctors SET FirstName = ?, LastName = ?, PhoneNumber = ?, SurgeryName = ? WHERE ID = ?", $con, "ssssi", $_POST['fname'], $_POST['lname'], $_POST['phone'], $_POST['surgery'], $_POST['doctorID']);
+			}
+
+			$result = true;
 		}
+
 	}
 
 	if($result){
@@ -148,9 +101,6 @@ if(!empty($_POST)){
 
 $genders = DB::executeQuery("SELECT * FROM Genders ORDER BY Name", $con);
 $relationships = DB::executeQuery("SELECT * FROM RelationshipTypes ORDER BY SortOrder, Name", $con);
-
-$member['contacts'] = DB::executeQuery("SELECT c.*, r.Name AS Relationship, mc.RelationshipTypeID FROM MemberContacts mc INNER JOIN Contacts c ON c.ID = mc.ContactID INNER JOIN RelationshipTypes r ON r.ID = mc.RelationshipTypeID WHERE mc.MemberID = ? ORDER BY r.SortOrder, c.LastName, c.FirstName", $con, "s", $_GET['id']);
-$member['doctor'] = DB::executeQueryForSingle("SELECT * FROM Doctors WHERE ID = ?", $con, "i", $member['DoctorID']);
 
 DB::close($con);
 
