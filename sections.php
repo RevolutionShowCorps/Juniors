@@ -1,4 +1,5 @@
 <?php
+require_once("secure.php");
 
 $sections = array(
 	array(

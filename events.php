@@ -1,4 +1,6 @@
 <?php
+require_once("secure.php");
+
 function getLinkForMonth($date, $movement){
 	$target = clone $date;
 	$target->modify($movement . " month");

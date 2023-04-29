@@ -1,4 +1,6 @@
 <?php
+require_once("secure.php");
+
 $name = "Luke Taylor";
 $title = "Sub History for " . $name;
 require_once('head.php');
