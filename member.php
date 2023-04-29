@@ -55,6 +55,18 @@ function createContact($con){
 	return true;
 }
 
+function createDoctor($con){
+	if(!empty(checkRequiredFields(array("fname", "lname", "surgery"), $_POST))){
+		return false;
+	}
+
+	DB::executeQuery("INSERT INTO Doctors (FirstName, LastName, PhoneNumber, SurgeryName) VALUES (?, ?, ?, ?)", $con, "ssss", $_POST['fname'], $_POST['lname'], $_POST['phone'], $_POST['surgery']);
+
+	DB::executeQuery("UPDATE Members SET DoctorID = ? WHERE ID = ?", $con, "is", $con->insert_id, $_GET['id']);
+
+	return true;
+}
+
 function updateMember($con){
 	if(!validateData()){
 		return false;
@@ -83,22 +95,27 @@ if($member == NULL){
 }
 
 if(!empty($_POST)){
+	$result = false;
+
 	if(isset($_POST['update'])){
-		if(updateMember($con)){
-			header("Location: member.php?saved=1&id=" . $_GET['id']);
-			die();
-		}
+		$result = updateMember($con);
 	} else if(isset($_POST['contact'])){
 		if($_POST['contactID'] == -1){
 			$result = createContact($con);
 		} else {
 			$result = updateContact($con);
 		}
-
-		if($result){
-			header("Location: member.php?saved=1&id=" . $_GET['id']);
-			die();
+	} else if(isset($_POST['doctor'])){
+		if($_POST['doctorID'] == -1){
+			$result = createDoctor($con);
+		} else {
+			$result = updateDoctor($con);
 		}
+	}
+
+	if($result){
+		header("Location: member.php?saved=1&id=" . $_GET['id']);
+		die();
 	}
 }
 
@@ -106,7 +123,7 @@ $genders = DB::executeQuery("SELECT * FROM Genders ORDER BY Name", $con);
 $relationships = DB::executeQuery("SELECT * FROM RelationshipTypes ORDER BY SortOrder, Name", $con);
 
 $member['contacts'] = DB::executeQuery("SELECT c.*, r.Name AS Relationship FROM MemberContacts mc INNER JOIN Contacts c ON c.ID = mc.ContactID INNER JOIN RelationshipTypes r ON r.ID = mc.RelationshipTypeID WHERE mc.MemberID = ? ORDER BY r.SortOrder, c.LastName, c.FirstName", $con, "s", $_GET['id']);
-$member['doctor'] = null;
+$member['doctor'] = DB::executeQueryForSingle("SELECT * FROM Doctors WHERE ID = ?", $con, "i", $member['DoctorID']);
 
 DB::close($con);
 
@@ -226,7 +243,7 @@ require_once('head.php');
 
 		if($member['doctor'] == null){
 			?>
-		<div class="alert alert-danger">No doctor's surgery on record! <button class="btn btn-primary">Add One Now</button></div>
+		<div class="alert alert-danger">No doctor's surgery on record! <button class="btn btn-primary add-doctor">Add One Now</button></div>
 		<?php } ?>
 
 
@@ -235,8 +252,8 @@ require_once('head.php');
 					for($i = 0; $i < count($member['contacts']); $i++){ 
 						$contact = $member['contacts'][$i]; 
 				?>
-			<div class="col">
-				<div class="card mb-3">
+			<div class="col mb-3">
+				<div class="card h-100">
 					<div class="card-header d-flex align-items-center">Contact
 						<?php echo $i + 1 ?> <button class="btn btn-primary ms-auto">Edit</button>
 					</div>
@@ -278,11 +295,21 @@ require_once('head.php');
 			</div>
 			<?php 
 			}
+
+			if(count($member['contacts']) < 2){
+				?>
+			<div class="col mb-3">
+				<div class="card card-body h-100 d-flex align-items-center justify-content-center">
+					<button class="btn btn-primary add-contact stretched-link">Add a Second Contact</button>
+				</div>
+			</div>
+			<?php
+			}
 			
 			if($member['doctor'] != null){
 			?>
 
-			<div class="col">
+			<div class="col mb-3">
 				<div class="card">
 					<div class="card-header button-header">Doctor <button class="btn btn-primary">Edit</button></div>
 					<table class="table table-hover details">
@@ -290,19 +317,19 @@ require_once('head.php');
 							<tr>
 								<td>Name</td>
 								<td>
-									<?php echo $member['doctor']['name'] ?>
+									<?php echo $member['doctor']['FirstName'] . " " . $member['doctor']['LastName'] ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Surgery</td>
 								<td>
-									<?php echo $member['doctor']['surgery'] ?>
+									<?php echo $member['doctor']['SurgeryName'] ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Phone</td>
 								<td>
-									<?php echo $member['doctor']['phone'] ?>
+									<?php echo $member['doctor']['PhoneNumber'] ?>
 								</td>
 							</tr>
 						</tbody>
@@ -318,43 +345,43 @@ require_once('head.php');
 			<div class="modal-dialog modal-lg">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h2 class="modal-title fs-5" id="contactTitle">Add A Contact</h1>
-							<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+						<h2 class="modal-title fs-5" id="contactTitle">Add A Contact</h2>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
 						<div class="row row-cols-1 row-cols-lg-2">
 							<div class="col">
 								<div class="form-floating mb-3">
 									<input type="text" class="form-control" id="cfname" name="fname" placeholder="First Name" required>
-									<label for="fname">First Name</label>
+									<label for="cfname">First Name</label>
 								</div>
 							</div>
 
 							<div class="col">
 								<div class="form-floating mb-3">
 									<input type="text" class="form-control" id="clname" name="lname" placeholder="Last Name" required>
-									<label for="lname">Last Name</label>
+									<label for="clname">Last Name</label>
 								</div>
 							</div>
 
 							<div class="col">
 								<div class="form-floating mb-3">
 									<input type="text" class="form-control" id="cmobile" name="mobile" placeholder="Mobile Phone">
-									<label for="mobile">Mobile Phone</label>
+									<label for="cmobile">Mobile Phone</label>
 								</div>
 							</div>
 
 							<div class="col">
 								<div class="form-floating mb-3">
 									<input type="text" class="form-control" id="clandline" name="landline" placeholder="Landline">
-									<label for="landline">Landline</label>
+									<label for="clandline">Landline</label>
 								</div>
 							</div>
 						</div>
 
 						<div class="form-floating mb-3">
 							<input type="text" class="form-control" id="cemail" name="email" placeholder="Email Address">
-							<label for="email">Email Address</label>
+							<label for="cemail">Email Address</label>
 						</div>
 
 						<hr />
@@ -382,6 +409,54 @@ require_once('head.php');
 		</div>
 	</form>
 
+	<form method="post">
+		<div class="modal fade" id="doctor" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h2 class="modal-title fs-5" id="doctorTitle">Add A Doctor's Surgery</h2>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<div class="row row-cols-1 row-cols-lg-2">
+							<div class="col">
+								<div class="form-floating mb-3">
+									<input type="text" class="form-control" id="dfname" name="fname" placeholder="First Name" required>
+									<label for="dfname">First Name</label>
+								</div>
+							</div>
+
+							<div class="col">
+								<div class="form-floating mb-3">
+									<input type="text" class="form-control" id="dlname" name="lname" placeholder="Last Name" required>
+									<label for="dlname">Last Name</label>
+								</div>
+							</div>
+
+							<div class="col">
+								<div class="form-floating mb-3">
+									<input type="text" class="form-control" id="dphone" name="phone" placeholder="Phone Number">
+									<label for="dphone">Phone Number</label>
+								</div>
+							</div>
+						</div>
+
+						<div class="form-floating mb-3">
+							<input type="text" class="form-control" id="surgery" name="surgery" placeholder="Surgery" required>
+							<label for="surgery">Surgery</label>
+						</div>
+
+						<input type="hidden" name="doctorID" id="doctorID" />
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+						<button name="doctor" class="btn btn-success">Save</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+
 	<script src="js/bootstrap.min.js"></script>
 	<script>
 		function addContact() {
@@ -401,11 +476,32 @@ require_once('head.php');
 			contactModal.show();
 		}
 
+		function addDoctor() {
+			showDoctorModal(-1, "Add a Doctor's Surgery", "", "", "", "");
+		}
+
+		function showDoctorModal(id, title, firstName, lastName, phone, surgery) {
+			document.getElementById("doctorID").value = id;
+			document.getElementById("doctorTitle").innerHTML = title;
+			document.getElementById("dfname").value = firstName;
+			document.getElementById("dlname").value = lastName;
+			document.getElementById("dphone").value = phone;
+			document.getElementById("surgery").value = surgery;
+
+			doctorModal.show();
+		}
+
 		const contactModal = new bootstrap.Modal(document.getElementById("contact"), {
 			backdrop: 'static'
 		});
 
+		const doctorModal = new bootstrap.Modal(document.getElementById("doctor"), {
+			backdrop: 'static'
+		});
+
 		Array.from(document.getElementsByClassName("add-contact")).forEach(el => el.addEventListener("click", addContact));
+
+		Array.from(document.getElementsByClassName("add-doctor")).forEach(el => el.addEventListener("click", addDoctor));
 	</script>
 </body>
 
