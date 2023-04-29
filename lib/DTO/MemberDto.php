@@ -35,6 +35,10 @@ class MemberDto{
 		return new MemberDto($row['ID'], $row['FirstName'], $row['LastName'], $row['GenderID'], $row['DateOfBirth'], $row['MedicalDetails'], $row['Allergies'], $row['LastTetanus'], $row['CanDressWounds'], $row['CanAdministerMedication']);
 	}
 
+	static function getForCreation(){
+		return new MemberDto(-1, "", "", "", null, "", "", null, 0, 0);
+	}
+
 	function fullName(){
 		return $this->firstName . " " . $this->lastName;
 	}

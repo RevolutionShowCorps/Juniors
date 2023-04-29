@@ -48,4 +48,23 @@ class Member{
 			DB::close($con);
 		}
 	}
+
+	static function create($fname, $lname, $genderID, $DOB, $medical, $allergies, $tetanus, $wounds, $medication, $con = null){
+		$openedConnection = false;
+		if($con == null){
+			$openedConnection = true;
+			$con = DB::connect();
+		}
+
+		$id = Utils::get_guid();
+		DB::executeQuery("INSERT INTO Members (ID, FirstName, LastName, GenderID, DateOfBirth, MedicalDetails, Allergies, LastTetanus, CanDressWounds, CanAdministerMedication) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", $con, "sssissssii", $id, $fname, $lname, $genderID, Utils::dateTimeForDB($DOB), $medical, $allergies, Utils::dateTimeForDB($tetanus), $wounds, $medication);
+
+		$member = self::getByID($id, $con);
+
+		if($openedConnection){
+			DB::close($con);
+		}
+
+		return $member;
+	}
 }
