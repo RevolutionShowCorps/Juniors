@@ -1,6 +1,10 @@
 <?php
 
 require_once(__DIR__ . "/DB.php");
+require_once(__DIR__ . "/DTO/MemberDto.php");
+require_once(__DIR__ . "/Utils.php");
+
+require_once(__DIR__ . "/Contact.php");
 
 class Member{
 	static function getByID($id, $con = null){
@@ -10,12 +14,18 @@ class Member{
 			$con = DB::connect();
 		}
 
-		$member = DB::executeQueryForSingle("SELECT * FROM Members WHERE ID = ?", $con, "s", $id);
+		$member = null;
+		$result = DB::executeQueryForSingle("SELECT * FROM Members WHERE ID = ?", $con, "s", $id);
 
-		if($member != null){
-			$member['contacts'] = DB::executeQuery("SELECT c.*, r.Name AS Relationship, mc.RelationshipTypeID FROM MemberContacts mc INNER JOIN Contacts c ON c.ID = mc.ContactID INNER JOIN RelationshipTypes r ON r.ID = mc.RelationshipTypeID WHERE mc.MemberID = ? ORDER BY r.SortOrder, c.LastName, c.FirstName", $con, "s", $id);
+		if($result != null){
+			$member = MemberDto::createFromDataset($result);
 
-			$member['doctor'] = DB::executeQueryForSingle("SELECT * FROM Doctors WHERE ID = ?", $con, "i", $member['DoctorID']);
+			$contacts = Contact::getForMemberID($member->ID);
+			foreach($contacts as $contact){
+				$member->addContact($contact);
+			}
+
+			$member->doctor = DB::executeQueryForSingle("SELECT * FROM Doctors WHERE ID = ?", $con, "i", $result['DoctorID']);
 		}
 
 		if($openedConnection){
@@ -25,14 +35,14 @@ class Member{
 		return $member;
 	}
 
-	static function update($id, $fname, $lname, $genderID, $dob, $medical, $allergies, $lastTetanus, $canDressWounds, $canAdministerMedication, $con = null){
+	static function update($member, $con = null){
 		$openedConnection = false;
 		if($con == null){
 			$openedConnection = true;
 			$con = DB::connect();
 		}
 
-		DB::executeQuery("UPDATE Members SET FirstName = ?, LastName = ?, GenderID = ?, DateOfBirth = ?, MedicalDetails = ?, Allergies = ?, LastTetanus = ?, CanDressWounds = ?, CanAdministerMedication = ? WHERE ID = ?", $con, "ssissssiis", trim($fname), trim($lname), $genderID, $dob, trim($medical), trim($allergies), $lastTetanus, $canDressWounds, $canAdministerMedication, $id);
+		DB::executeQuery("UPDATE Members SET FirstName = ?, LastName = ?, GenderID = ?, DateOfBirth = ?, MedicalDetails = ?, Allergies = ?, LastTetanus = ?, CanDressWounds = ?, CanAdministerMedication = ? WHERE ID = ?", $con, "ssissssiis", trim($member->firstName), trim($member->lastName), $member->genderID, Utils::dateTimeForDB($member->DOB), trim($member->medicalConditions), trim($member->allergies), Utils::dateTimeForDB($member->lastTetanus), $member->canDressWounds, $member->canAdministerMedication, $member->ID);
 
 		if($openedConnection){
 			DB::close($con);

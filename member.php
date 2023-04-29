@@ -3,8 +3,8 @@ require_once("secure.php");
 
 require_once(__DIR__ . "/lib/DB.php");
 require_once(__DIR__ . "/lib/Member.php");
+require_once(__DIR__ . "/lib/Contact.php");
 require_once(__DIR__ . "/lib/Validation.php");
-require_once(__DIR__ . "/lib/Utils.php");
 
 $validationErrors = array();
 
@@ -14,38 +14,39 @@ function validateData(){
 	return empty($validationErrors);
 }
 
-function createContact($con){	
-	$contactID = Utils::get_guid();
-	DB::executeQuery("INSERT INTO Contacts (ID, FirstName, LastName, Mobile, Landline, Email) VALUES (?, ?, ?, ?, ?, ?)", $con, "ssssss", $contactID, $_POST['fname'], $_POST['lname'], $_POST['mobile'], $_POST['landline'], $_POST['email']);
-
-	DB::executeQuery("INSERT INTO MemberContacts (MemberID, ContactID, RelationshipTypeID) VALUES (?, ?, ?)", $con, "ssi", $_GET['id'], $contactID, $_POST['relationship']);
-
-	return true;
-}
-
 function updateContact($con){
-	$contact = DB::executeQueryForSingle("SELECT * FROM Contacts WHERE ID = ?", $con, "s", $_POST['contactID']);
+	$contact = Contact::getById($_POST['contactID']);
 	if($contact == null){
 		return false;
 	}
 
-	DB::executeQuery("UPDATE Contacts SET FirstName = ?, LastName = ?, Mobile = ?, Landline = ?, Email = ? WHERE ID = ?", $con, "ssssss", $_POST['fname'], $_POST['lname'], $_POST['mobile'], $_POST['landline'], $_POST['email'], $_POST['contactID']);
+	$contact->firstName = $_POST['fname'];
+	$contact->lastName = $_POST['lname'];
+	$contact->mobile = $_POST['mobile'];
+	$contact->landline = $_POST['landline'];
+	$contact->email = $_POST['email'];
 
-	DB::executeQuery("UPDATE MemberContacts SET RelationshipTypeID = ? WHERE MemberID = ? AND ContactID = ?", $con, "iss", $_POST['relationship'], $_GET['id'], $_POST['contactID']);
+	Contact::update($contact, $_POST['relationship'], $_GET['id'], $con);
 
 	return true;
 }
 
-function updateMember($con){
+function updateMember($member, $con){
 	if(!validateData()){
 		return false;
 	}
 
-	if($_POST['tetanus'] == ""){
-		$_POST['tetanus'] = null;
-	}
+	$member->firstName = $_POST['fname'];
+	$member->lastName = $_POST['lname'];
+	$member->genderID = $_POST['gender'];
+	$member->DOB = Utils::toDateTime($_POST['dob']);
+	$member->medicalConditions = $_POST['medical'];
+	$member->allergies = $_POST['allergies'];
+	$member->lastTetanus = Utils::toDateTime($_POST['tetanus']);
+	$member->canDressWounds = isset($_POST['wounds']);
+	$member->canAdministerMedication = isset($_POST['medication']);
 
-	Member::update($_GET['id'], $_POST['fname'], $_POST['lname'], $_POST['gender'], $_POST['dob'], $_POST['medical'], $_POST['allergies'], $_POST['tetanus'], isset($_POST['wounds']), isset($_POST['medication']), $con);
+	Member::update($member, $con);
 	
 	return true;
 }
@@ -54,8 +55,8 @@ if(!isset($_GET['id'])){
 	header("Location: member.php?id=cbe5eee0-e68e-11ed-b2ea-04bf1b5a7502");
 	die();
 } 
-$con = DB::connect();
 
+$con = DB::connect();
 $member = Member::getByID($_GET['id'], $con);
 
 if($member == NULL){
@@ -67,12 +68,13 @@ if(!empty($_POST)){
 	$result = false;
 
 	if(isset($_POST['update'])){
-		$result = updateMember($con);
+		$result = updateMember($member, $con);
 
 	} else if(isset($_POST['contact'])){
 		if(empty(Validation::checkRequiredFields(array("fname", "lname", "relationship"), $_POST))){
 			if($_POST['contactID'] == -1){
-				$result = createContact($con);
+				Contact::createForMember($_GET['id'], $_POST['fname'], $_POST['lname'], $_POST['mobile'], $_POST['landline'], $_POST['email'], $_POST['relationship'], $con);
+				$result = true;
 			} else {
 				$result = updateContact($con);
 			}
@@ -104,13 +106,7 @@ $relationships = DB::executeQuery("SELECT * FROM RelationshipTypes ORDER BY Sort
 
 DB::close($con);
 
-$member['DateOfBirth'] = new DateTime($member['DateOfBirth']);
-
-if($member['LastTetanus'] != null){
-	$member['LastTetanus'] = new DateTime($member['LastTetanus']);
-}
-
-$title = $member['FirstName'] . " " . $member['LastName'];
+$title = $member->fullName();
 require_once('head.php');
 ?>
 
@@ -123,7 +119,9 @@ require_once('head.php');
 
 		<form method="post">
 			<?php if(!empty($validationErrors)){ ?>
-			<div class="alert alert-danger">Invalid details. Please try again</div>
+				<div class="alert alert-danger">Invalid details. Please try again</div>
+			<?php } else if(isset($_GET['saved'])){ ?>
+				<div class="alert alert-success">Member updated!</div>
 			<?php } ?>
 
 			<div class="card mb-3">
@@ -132,14 +130,14 @@ require_once('head.php');
 					<div class="row row-cols-1 row-cols-md-2">
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="text" class="form-control" id="fname" name="fname" placeholder="First Name" value="<?php echo $member['FirstName'] ?>" required>
+								<input type="text" class="form-control" id="fname" name="fname" placeholder="First Name" value="<?php echo $member->firstName ?>" required>
 								<label for="fname">First Name</label>
 							</div>
 						</div>
 
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="text" class="form-control" id="lname" name="lname" placeholder="Last Name" value="<?php echo $member['LastName'] ?>" required>
+								<input type="text" class="form-control" id="lname" name="lname" placeholder="Last Name" value="<?php echo $member->lastName ?>" required>
 								<label for="lname">Last Name</label>
 							</div>
 						</div>
@@ -149,7 +147,7 @@ require_once('head.php');
 								<select class="form-select" id="gender" name="gender" required>
 									<option value="">-- Please Select --</option>
 									<?php foreach($genders as $gender){ ?>
-									<option value="<?php echo $gender['ID'] ?>" <?php if($gender['ID']==$member['GenderID']){?>selected
+									<option value="<?php echo $gender['ID'] ?>" <?php if($gender['ID']==$member->genderID){?>selected
 										<?php } ?>>
 										<?php echo $gender['Name'] ?>
 									</option>
@@ -161,7 +159,7 @@ require_once('head.php');
 
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth" value="<?php echo $member['DateOfBirth']->format('Y-m-d') ?>" required>
+								<input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth" value="<?php echo $member->DOB->format('Y-m-d') ?>" required>
 								<label for="dob">Date of Birth</label>
 							</div>
 						</div>
@@ -173,20 +171,19 @@ require_once('head.php');
 				<div class="card-header">Medical Details</div>
 				<div class="card-body">
 					<div class="form-floating mb-3">
-						<textarea class="form-control" placeholder="E.g. Asthma" id="medical" name="medical"><?php echo $member['MedicalDetails'] ?></textarea>
+						<textarea class="form-control" placeholder="E.g. Asthma" id="medical" name="medical"><?php echo $member->medicalConditions ?></textarea>
 						<label for="medical">Medical Conditions</label>
 					</div>
 
 					<div class="form-floating mb-3">
-						<textarea class="form-control" placeholder="E.g.Nuts" id="allergies" name="allergies"><?php echo $member['Allergies'] ?></textarea>
+						<textarea class="form-control" placeholder="E.g.Nuts" id="allergies" name="allergies"><?php echo $member->allergies ?></textarea>
 						<label for="allergies">Allergies</label>
 					</div>
 
 					<div class="row row-cols-1 row-cols-md-2">
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="date" class="form-control" id="tetanus" name="tetanus" placeholder="Last Tetanus Jab" <?php if($member['LastTetanus'] !=null){ ?>value="
-								<?php echo $member['LastTetanus']->format('Y-m-d') ?>"
+								<input type="date" class="form-control" id="tetanus" name="tetanus" placeholder="Last Tetanus Jab" <?php if($member->lastTetanus != null){ ?>value="<?php echo $member->lastTetanus->format('Y-m-d') ?>"
 								<?php } ?>>
 								<label for="tetanus">Last Tetanus Jab</label>
 							</div>
@@ -194,12 +191,12 @@ require_once('head.php');
 
 						<div class="col">
 							<div class="form-check form-switch">
-								<input class="form-check-input" type="checkbox" role="switch" id="wounds" name="wounds" <?php if($member['CanDressWounds']){?>checked
+								<input class="form-check-input" type="checkbox" role="switch" id="wounds" name="wounds" <?php if($member->canDressWounds){?>checked
 								<?php } ?>>
 								<label class="form-check-label" for="wounds">Consent to clean/dress wounds?</label>
 							</div>
 							<div class="form-check form-switch">
-								<input class="form-check-input" type="checkbox" role="switch" id="medication" name="medication" <?php if($member['CanAdministerMedication']){?>checked
+								<input class="form-check-input" type="checkbox" role="switch" id="medication" name="medication" <?php if($member->canAdministerMedication){?>checked
 								<?php } ?>>
 								<label class="form-check-label" for="medication">Consent to administer paracetamol/ibuprofen?</label>
 							</div>
@@ -213,12 +210,12 @@ require_once('head.php');
 			</div>
 		</form>
 
-		<?php if(count($member['contacts']) == 0){ ?>
+		<?php if(count($member->contacts) == 0){ ?>
 		<div class="alert alert-danger">No contacts registered! <button class="btn btn-primary add-contact">Add One Now</button></div>
 		<?php 
 		}
 
-		if($member['doctor'] == null){
+		if($member->doctor == null){
 			?>
 		<div class="alert alert-danger">No doctor's surgery on record! <button class="btn btn-primary add-doctor">Add One Now</button></div>
 		<?php } ?>
@@ -226,8 +223,8 @@ require_once('head.php');
 
 		<div class="row row-cols-1 row-cols-md-2">
 			<?php 
-					for($i = 0; $i < count($member['contacts']); $i++){ 
-						$contact = $member['contacts'][$i]; 
+					for($i = 0; $i < count($member->contacts); $i++){ 
+						$contact = $member->contacts[$i]; 
 				?>
 			<div class="col mb-3">
 				<div class="card h-100">
@@ -239,31 +236,31 @@ require_once('head.php');
 							<tr>
 								<td>Name</td>
 								<td>
-									<?php echo $contact['FirstName'] . " " . $contact['LastName'] ?>
+									<?php echo $contact->fullName() ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Relationship</td>
 								<td>
-									<?php echo $contact['Relationship'] ?>
+									<?php echo $contact->relationship->name ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Mobile</td>
 								<td>
-									<?php echo $contact['Mobile'] ?>
+									<?php echo $contact->mobile ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Landline</td>
 								<td>
-									<?php echo $contact['Landline'] ?>
+									<?php echo $contact->landline ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Email</td>
-								<td><a href="mailto:<?php echo $contact['Email'] ?>">
-										<?php echo $contact['Email'] ?>
+								<td><a href="mailto:<?php echo $contact->email ?>">
+										<?php echo $contact->email ?>
 									</a></td>
 							</tr>
 						</tbody>
@@ -273,7 +270,7 @@ require_once('head.php');
 			<?php 
 			}
 
-			if(count($member['contacts']) < 2){
+			if(count($member->contacts) < 2){
 				?>
 			<div class="col mb-3">
 				<div class="card card-body h-100 d-flex align-items-center justify-content-center">
@@ -283,30 +280,30 @@ require_once('head.php');
 			<?php
 			}
 			
-			if($member['doctor'] != null){
+			if($member->doctor != null){
 			?>
 
 			<div class="col mb-3">
 				<div class="card">
-					<div class="card-header button-header">Doctor <button data-doctor='<?php echo json_encode($member['doctor']) ?>' class="btn btn-primary edit-doctor">Edit</button></div>
+					<div class="card-header button-header">Doctor <button data-doctor='<?php echo json_encode($member->doctor) ?>' class="btn btn-primary edit-doctor">Edit</button></div>
 					<table class="table table-hover details">
 						<tbody>
 							<tr>
 								<td>Name</td>
 								<td>
-									<?php echo $member['doctor']['FirstName'] . " " . $member['doctor']['LastName'] ?>
+									<?php echo $member->doctor['FirstName'] . " " . $member->doctor['LastName'] ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Surgery</td>
 								<td>
-									<?php echo $member['doctor']['SurgeryName'] ?>
+									<?php echo $member->doctor['SurgeryName'] ?>
 								</td>
 							</tr>
 							<tr>
 								<td>Phone</td>
 								<td>
-									<?php echo $member['doctor']['PhoneNumber'] ?>
+									<?php echo $member->doctor['PhoneNumber'] ?>
 								</td>
 							</tr>
 						</tbody>
@@ -442,7 +439,7 @@ require_once('head.php');
 
 		function editContact(el){
 			const data = JSON.parse(el.dataset.contact);
-			showContactModal(data.ID, `Edit Contact ${data.FirstName} ${data.LastName}`, data.FirstName, data.LastName, data.Mobile, data.Landline, data.Email, data.RelationshipTypeID);
+			showContactModal(data.ID, `Edit Contact ${data.firstName} ${data.lastName}`, data.firstName, data.lastName, data.mobile, data.landline, data.email, data.relationship.ID);
 		}
 
 		function showContactModal(id, title, firstName, lastName, mobile, landline, email, relationship) {

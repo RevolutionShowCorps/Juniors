@@ -17,12 +17,12 @@ class Validation{
 		$validationErrors = array();
 
 		foreach($fields as $field){
-			if(isset($array[$dateField])){
-				$test = new DateTime($array[$dateField]);
+			if(isset($array[$field])){
+				$test = new DateTime($array[$field]);
 				if($test == null){
-					$validationErrors[$dateField] = "Invalid date";
+					$validationErrors[$field] = "Invalid date";
 				} else {
-					$array[$dateField] = $test;
+					$array[$field] = $test;
 				}
 			}
 		}
