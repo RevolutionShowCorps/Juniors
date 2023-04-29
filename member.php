@@ -55,6 +55,23 @@ function createContact($con){
 	return true;
 }
 
+function updateContact($con){
+	if(!empty(checkRequiredFields(array("fname", "lname", "relationship"), $_POST))){
+		return false;
+	}
+
+	$contact = DB::executeQueryForSingle("SELECT * FROM Contacts WHERE ID = ?", $con, "s", $_POST['contactID']);
+	if($contact == null){
+		return false;
+	}
+
+	DB::executeQuery("UPDATE Contacts SET FirstName = ?, LastName = ?, Mobile = ?, Landline = ?, Email = ? WHERE ID = ?", $con, "ssssss", $_POST['fname'], $_POST['lname'], $_POST['mobile'], $_POST['landline'], $_POST['email'], $_POST['contactID']);
+
+	DB::executeQuery("UPDATE MemberContacts SET RelationshipTypeID = ? WHERE MemberID = ? AND ContactID = ?", $con, "iss", $_POST['relationship'], $_GET['id'], $_POST['contactID']);
+
+	return true;
+}
+
 function createDoctor($con){
 	if(!empty(checkRequiredFields(array("fname", "lname", "surgery"), $_POST))){
 		return false;
@@ -63,6 +80,16 @@ function createDoctor($con){
 	DB::executeQuery("INSERT INTO Doctors (FirstName, LastName, PhoneNumber, SurgeryName) VALUES (?, ?, ?, ?)", $con, "ssss", $_POST['fname'], $_POST['lname'], $_POST['phone'], $_POST['surgery']);
 
 	DB::executeQuery("UPDATE Members SET DoctorID = ? WHERE ID = ?", $con, "is", $con->insert_id, $_GET['id']);
+
+	return true;
+}
+
+function updateDoctor($con){
+	if(!empty(checkRequiredFields(array("fname", "lname", "surgery"), $_POST))){
+		return false;
+	}
+
+	DB::executeQuery("UPDATE Doctors SET FirstName = ?, LastName = ?, PhoneNumber = ?, SurgeryName = ? WHERE ID = ?", $con, "ssssi", $_POST['fname'], $_POST['lname'], $_POST['phone'], $_POST['surgery'], $_POST['doctorID']);
 
 	return true;
 }
@@ -122,7 +149,7 @@ if(!empty($_POST)){
 $genders = DB::executeQuery("SELECT * FROM Genders ORDER BY Name", $con);
 $relationships = DB::executeQuery("SELECT * FROM RelationshipTypes ORDER BY SortOrder, Name", $con);
 
-$member['contacts'] = DB::executeQuery("SELECT c.*, r.Name AS Relationship FROM MemberContacts mc INNER JOIN Contacts c ON c.ID = mc.ContactID INNER JOIN RelationshipTypes r ON r.ID = mc.RelationshipTypeID WHERE mc.MemberID = ? ORDER BY r.SortOrder, c.LastName, c.FirstName", $con, "s", $_GET['id']);
+$member['contacts'] = DB::executeQuery("SELECT c.*, r.Name AS Relationship, mc.RelationshipTypeID FROM MemberContacts mc INNER JOIN Contacts c ON c.ID = mc.ContactID INNER JOIN RelationshipTypes r ON r.ID = mc.RelationshipTypeID WHERE mc.MemberID = ? ORDER BY r.SortOrder, c.LastName, c.FirstName", $con, "s", $_GET['id']);
 $member['doctor'] = DB::executeQueryForSingle("SELECT * FROM Doctors WHERE ID = ?", $con, "i", $member['DoctorID']);
 
 DB::close($con);
@@ -255,7 +282,7 @@ require_once('head.php');
 			<div class="col mb-3">
 				<div class="card h-100">
 					<div class="card-header d-flex align-items-center">Contact
-						<?php echo $i + 1 ?> <button class="btn btn-primary ms-auto">Edit</button>
+						<?php echo $i + 1 ?> <button data-contact='<?php echo json_encode($contact) ?>' class="btn btn-primary edit-contact ms-auto">Edit</button>
 					</div>
 					<table class="table table-hover details">
 						<tbody>
@@ -311,7 +338,7 @@ require_once('head.php');
 
 			<div class="col mb-3">
 				<div class="card">
-					<div class="card-header button-header">Doctor <button class="btn btn-primary">Edit</button></div>
+					<div class="card-header button-header">Doctor <button data-doctor='<?php echo json_encode($member['doctor']) ?>' class="btn btn-primary edit-doctor">Edit</button></div>
 					<table class="table table-hover details">
 						<tbody>
 							<tr>
@@ -463,6 +490,11 @@ require_once('head.php');
 			showContactModal(-1, "Add A Contact", "", "", "", "", "", "");
 		}
 
+		function editContact(el){
+			const data = JSON.parse(el.dataset.contact);
+			showContactModal(data.ID, `Edit Contact ${data.FirstName} ${data.LastName}`, data.FirstName, data.LastName, data.Mobile, data.Landline, data.Email, data.RelationshipTypeID);
+		}
+
 		function showContactModal(id, title, firstName, lastName, mobile, landline, email, relationship) {
 			document.getElementById("contactID").value = id;
 			document.getElementById("contactTitle").innerHTML = title;
@@ -474,6 +506,11 @@ require_once('head.php');
 			document.getElementById("relationship").value = relationship;
 
 			contactModal.show();
+		}
+
+		function editDoctor(el){
+			const data = JSON.parse(el.dataset.doctor);
+			showDoctorModal(data.ID, "Edit Doctor", data.FirstName, data.LastName, data.PhoneNumber, data.SurgeryName);
 		}
 
 		function addDoctor() {
@@ -500,8 +537,10 @@ require_once('head.php');
 		});
 
 		Array.from(document.getElementsByClassName("add-contact")).forEach(el => el.addEventListener("click", addContact));
+		Array.from(document.getElementsByClassName("edit-contact")).forEach(el => el.addEventListener("click", () => editContact(el)));
 
 		Array.from(document.getElementsByClassName("add-doctor")).forEach(el => el.addEventListener("click", addDoctor));
+		Array.from(document.getElementsByClassName("edit-doctor")).forEach(el => el.addEventListener("click", () => editDoctor(el)));
 	</script>
 </body>
 

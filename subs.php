@@ -15,7 +15,7 @@ require_once('head.php');
 			</a>
 		</h2>
 
-		<div class="row row-cols-1 row-cols-md-3">
+		<div class="row row-cols-1 row-cols-lg-3">
 			<div class="col mb-3">
 				<div class="card h-100 card-status text-bg-danger">
 					<div class="card-header">Current Balance</div>
