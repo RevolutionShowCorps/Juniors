@@ -26,8 +26,11 @@ class DB{
 		}
 
 		$data = [];
-		while($row = $result->fetch_assoc()){
-			$data[] = $row;
+
+		if($result){
+			while($row = $result->fetch_assoc()){
+				$data[] = $row;
+			}
 		}
 
 		if($opened){
