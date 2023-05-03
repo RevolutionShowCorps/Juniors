@@ -35,6 +35,28 @@ class Member{
 		return $member;
 	}
 
+	static function getBySection($sectionID, $con = null){
+		$openedConnection = false;
+		if($con == null){
+			$openedConnection = true;
+			$con = DB::connect();
+		}
+
+		$members = array();
+		$result = DB::executeQuery("SELECT m.* FROM MemberSections ms INNER JOIN Members m ON m.ID = ms.MemberID WHERE ms.SectionID = ? AND ms.StartDate <= NOW() AND IFNULL(ms.EndDate, NOW()) <= NOW()", $con, "i", $sectionID);
+
+		foreach($result as $row){
+			$member = MemberDto::createFromDataset($row);
+			$members[] = $member;
+		}
+
+		if($openedConnection){
+			DB::close($con);
+		}
+
+		return $members;
+	}
+
 	static function update($member, $con = null){
 		$openedConnection = false;
 		if($con == null){
