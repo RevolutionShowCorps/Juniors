@@ -9,6 +9,9 @@ $con = DB::connect();
 if(isset($_POST['create'])){
 	Section::create($_POST['name'], $con);
 	header("Location: ?saved=1");
+} else if(isset($_POST['edit'])){
+	Section::addMember($_POST['newSection'], $_POST['newRole'], $_POST['member'], $con);
+	header("Location: ?saved=1");
 }
 
 $sections = Section::getAll(true, $con);
@@ -52,7 +55,7 @@ require_once('../head.php');
 									$members++;
 									?>
 								<div class="list-group-item">
-									<?php echo $member->fullName() ?> <span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member->fullName() ?>" data-section='{"name": "<?php echo $section->name ?>", "id":
+									<?php echo $member->fullName() ?> <span class="hover float-end"><a href="#" class="edit-member" data-member='{"name": "<?php echo $member->fullName() ?>", "id": "<?php echo $member->ID ?>"}' data-section='{"name": "<?php echo $section->name ?>", "id":
 											<?php echo $section->ID ?>, "roleID":
 											<?php echo $member->section->role->ID ?>}'>Edit
 										</a> | <a href="member.php?id=<?php echo $member->ID ?>">View</a></span>
@@ -85,7 +88,7 @@ require_once('../head.php');
 									<span class="badge text-bg-primary">
 										<?php echo $member->section->role->name ?>
 									</span>
-									<span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member->fullName() ?>" data-section='{"name": "<?php echo $section->name ?>", "id":
+									<span class="hover float-end"><a href="#" class="edit-member" data-member='{"name": "<?php echo $member->fullName() ?>", "id": "<?php echo $member->ID ?>"}' data-section='{"name": "<?php echo $section->name ?>", "id":
 											<?php echo $section->ID ?>, "roleID":
 											<?php echo $member->section->role->ID ?>}'>Edit
 										</a> | <a href="member.php?id=<?php echo $member->ID ?>">View</a></span>
@@ -108,43 +111,46 @@ require_once('../head.php');
 
 
 	<!-- edit modal -->
-	<div class="modal" id="editModal" tabindex="-1">
-		<div class="modal-dialog modal-lg">
-			<div class="modal-content">
-				<div class="modal-header">
-					<h1 class="modal-title fs-4">Edit Section for <span id="editName"></span></h1>
-					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-				</div>
-				<div class="modal-body">
-					<p>Current section: <span class="fw-bold" id="editSection"></span></p>
-
-					<div class="form-floating mb-3">
-						<select class="form-select" id="editNewSection" required>
-							<option value="">-- Please Select --</option>
-							<?php foreach($sections as $section){ ?>
-								<option value="<?php echo $section->ID ?>"><?php echo $section->name ?></option>
-							<?php } ?>
-						</select>
-						<label for="section">New Section</label>
+	<form method="post">
+		<div class="modal" id="editModal" tabindex="-1">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-4">Edit Section for <span id="editName"></span></h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
+					<div class="modal-body">
+						<p>Current section: <span class="fw-bold" id="editSection"></span></p>
 
-					<div class="form-floating mb-3">
-						<select class="form-select" id="editRole" required>
-							<option value="">-- Please Select --</option>
-							<?php foreach($roles as $role){ ?>
-							<option value="<?php echo $role['ID'] ?>"><?php echo $role['Name'] ?></option>
-							<?php } ?>
-						</select>
-						<label for="role">Role</label>
+						<div class="form-floating mb-3">
+							<select class="form-select" id="editNewSection" name="newSection" required>
+								<option value="">-- Please Select --</option>
+								<?php foreach($sections as $section){ ?>
+									<option value="<?php echo $section->ID ?>"><?php echo $section->name ?></option>
+								<?php } ?>
+							</select>
+							<label for="editNewSection">New Section</label>
+						</div>
+
+						<div class="form-floating mb-3">
+							<select class="form-select" id="editRole" name="newRole" required>
+								<option value="">-- Please Select --</option>
+								<?php foreach($roles as $role){ ?>
+								<option value="<?php echo $role['ID'] ?>"><?php echo $role['Name'] ?></option>
+								<?php } ?>
+							</select>
+							<label for="editRole">Role</label>
+						</div>
 					</div>
-				</div>
-				<div class="modal-footer">
-					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-					<button type="button" class="btn btn-primary">Save changes</button>
+					<div class="modal-footer">
+						<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+						<button name="edit" class="btn btn-primary">Save changes</button>
+					</div>
 				</div>
 			</div>
 		</div>
-	</div>
+		<input type="hidden" name="member" id="editMember" />
+	</form>
 
 	<!-- create modal -->
 	<form method="post">
@@ -200,11 +206,9 @@ require_once('../head.php');
 			backdrop: 'static'
 		});
 
-		function showEditModal(name, section) {
-			console.log(name);
-			console.log(section);
-
-			document.getElementById("editName").innerHTML = name;
+		function showEditModal(member, section) {
+			document.getElementById("editName").innerHTML = member.name;
+			document.getElementById("editMember").value = member.id;
 			document.getElementById("editSection").innerHTML = section.name;
 			document.getElementById("editNewSection").value = section.id;
 			document.getElementById("editRole").value = section.roleID;
@@ -218,7 +222,7 @@ require_once('../head.php');
 
 		Array.from(document.getElementsByClassName("edit-member")).forEach(el => el.addEventListener("click", e => {
 			e.preventDefault();
-			showEditModal(el.dataset.name, JSON.parse(el.dataset.section))
+			showEditModal(JSON.parse(el.dataset.member), JSON.parse(el.dataset.section))
 		}));
 
 		Array.from(document.getElementsByClassName("add-member")).forEach(el => el.addEventListener("click", () => showAddModal(el.dataset.section)));
