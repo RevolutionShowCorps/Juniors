@@ -5,99 +5,6 @@ require_once("../lib/Section.php");
 
 $sections = Section::getAll();
 
-/*$sections = array(
-	array(
-		"id"=>1,
-		"name"=>"Brass",
-		"members"=>array(
-			array(
-				"name"=>"Jacob Gill",
-				"role"=>array(
-					"id"=>1, 
-					"name"=>"Member"
-				)
-			),
-			array(
-				"name"=>"Oliver Archaki",
-				"role"=>array(
-					"id"=>1,
-					"name"=>"Member"
-				)
-			),
-			array(
-				"name"=>"Albie Jaques",
-				"role"=>array(
-					"id"=>1, 
-					"name"=>"Member"
-				)
-			),
-			array(
-				"name"=>"Sofia Cumbo",
-				"role"=>array(
-					"id"=>1,
-					"name"=>"Member"
-				)
-			),
-			array(
-				"name"=>"Evangeline Pedder-Stratton",
-				"role"=>array(
-					"id"=>1,
-					"name"=>"Member"
-				)
-			),
-			array(
-				"name"=>"Preeyan Mistry",
-				"role"=>array(
-					"id"=>1,
-					"name"=>"Member"
-				)
-			),
-			array(
-				"name"=>"Sam Martin",
-				"role"=>array(
-					"id"=>4,
-					"name"=>"Caption Head"
-				)
-			),
-			array(
-				"name"=>"Megan Mouncey",
-				"role"=>array(
-					"id"=>2,
-					"name"=>"Instructor"
-				)
-			),
-			array(
-				"name"=>"Megan Spencer",
-				"role"=>array(
-					"id"=>2,
-					"name"=>"Instructor"
-				)
-			),
-			array(
-				"name"=>"Oliver Richardson",
-				"role"=>array(
-					"id"=>2,
-					"name"=>"Instructor"
-				)
-			),
-			array(
-				"name"=>"Mike Seymour",
-				"role"=>array(
-					"id"=>2,
-					"name"=>"Instructor"
-				)
-			),
-			array(
-				"name"=>"Phillip Sorrenson",
-				"role"=>array(
-					"id"=>3,
-					"name"=>"Junior Instructor"
-				)
-			)
-		)
-	)
-);*/
-
 if(isset($_POST['create'])){
 	Section::create($_POST['name']);
 	header("Location: ?saved=1");
@@ -111,7 +18,7 @@ require_once('../head.php');
 	<div class="container">
 		<h1>
 			<?php echo $title ?>
-			<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addModal">+ Add</button>
+			<button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createModal">+ Add</button>
 		</h1>
 
 		<?php if(count($sections) == 0){ ?>
@@ -129,7 +36,7 @@ require_once('../head.php');
 				<div class="row row-cols-1 row-cols-md-2">
 					<div class="col">
 						<div class="card mb-3">
-							<div class="card-header button-header">Members <button class="btn btn-primary">Add</button></div>
+							<div class="card-header button-header">Members <button class="btn btn-primary add-member" data-section="<?php echo $section->ID ?>">Add</button></div>
 							<div class="list-group list-group-flush">
 								<?php 
 								foreach($section->members as $member){ 
@@ -150,7 +57,7 @@ require_once('../head.php');
 
 					<div class="col">
 						<div class="card mb-3">
-							<div class="card-header button-header">Instructors <button class="btn btn-primary">Add</button></div>
+							<div class="card-header button-header">Instructors <button class="btn btn-primary add-member" data-section="<?php echo $section->ID ?>">Add</button></div>
 							<div class="list-group list-group-flush">
 								<?php 
 								foreach($section->members as $member){ 
@@ -216,9 +123,9 @@ require_once('../head.php');
 		</div>
 	</div>
 
-	<!-- add modal -->
+	<!-- create modal -->
 	<form method="post">
-		<div class="modal" id="addModal" tabindex="-1">
+		<div class="modal" id="createModal" tabindex="-1">
 			<div class="modal-dialog modal-lg">
 				<div class="modal-content">
 					<div class="modal-header">
@@ -240,9 +147,33 @@ require_once('../head.php');
 		</div>
 	</form>
 
+	<!-- add modal -->
+	<form method="post">
+		<div class="modal" id="addModal" tabindex="-1">
+			<div class="modal-dialog modal-lg">
+				<div class="modal-content">
+					<div class="modal-header">
+						<h1 class="modal-title fs-4">Create Section</h1>
+						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+					</div>
+					<div class="modal-body">
+						<div class="list-group list-group-horizontal">
+							<a class="list-group-item list-group-item-action" id="newMember" href="member.php?section=">New Member</a>
+							<a class="list-group-item list-group-item-action">Existing Member</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</form>
+
 	<script src="js/bootstrap.min.js"></script>
 	<script>
 		const editModal = new bootstrap.Modal(document.getElementById("editModal"), {
+			backdrop: 'static'
+		});
+
+		const addModal = new bootstrap.Modal(document.getElementById("addModal"), {
 			backdrop: 'static'
 		});
 
@@ -254,10 +185,17 @@ require_once('../head.php');
 			editModal.show();
 		}
 
+		function showAddModal(section){
+			document.getElementById("newMember").href = `member.php?section=${section}`;
+			addModal.show();
+		}
+
 		Array.from(document.getElementsByClassName("edit-member")).forEach(el => el.addEventListener("click", e => {
 			e.preventDefault();
 			showEditModal(el.dataset.name, JSON.parse(el.dataset.section))
 		}));
+
+		Array.from(document.getElementsByClassName("add-member")).forEach(el => el.addEventListener("click", () => showAddModal(el.dataset.section)));
 	</script>
 </body>
 
