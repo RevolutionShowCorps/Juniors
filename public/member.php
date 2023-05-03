@@ -69,7 +69,7 @@ if(!empty($_POST)){
 				updateMember($member, $con);
 			}
 
-			Section::addMember($_POST['section'], $member->ID, $con);
+			Section::addMember($_POST['section'], $_POST['role'], $member->ID, $con);
 
 			$result = true;
 		}
@@ -107,6 +107,7 @@ if(!empty($_POST)){
 $genders = DB::executeQuery("SELECT * FROM Genders ORDER BY Name", $con);
 $sections = Section::getAll(false, $con);
 $relationships = DB::executeQuery("SELECT * FROM RelationshipTypes ORDER BY SortOrder, Name", $con);
+$roles = DB::executeQuery("SELECT * FROM Roles ORDER BY Name", $con);
 
 DB::close($con);
 
@@ -219,6 +220,16 @@ require_once('../head.php');
 							<?php } ?>
 						</select>
 						<label for="section">Section</label>
+					</div>
+
+					<div class="form-floating mb-3">
+						<select name="role" id="role" class="form-control" required>
+							<option value="">-- Please Select --</option>
+							<?php foreach($roles as $role){ ?>
+							<option value="<?php echo $role['ID'] ?>"<?php if(isset($member->section) && $role['ID'] == $member->section->role->ID){ ?> selected<?php } ?>><?php echo $role['Name'] ?></option>
+							<?php } ?>
+						</select>
+						<label for="role">Role</label>
 					</div>
 				</div>
 			</div>

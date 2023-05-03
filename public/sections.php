@@ -3,7 +3,7 @@ require_once("../secure.php");
 
 require_once("../lib/Section.php");
 
-$sections = Section::getAll();
+$sections = Section::getAll(true);
 
 if(isset($_POST['create'])){
 	Section::create($_POST['name']);
@@ -28,7 +28,7 @@ require_once('../head.php');
 		
 		foreach($sections as $section){ 
 		?>
-		<div class="card">
+		<div class="card mb-3">
 			<div class="card-header">
 				<?php echo $section->name ?>
 			</div>
@@ -40,9 +40,9 @@ require_once('../head.php');
 							<div class="list-group list-group-flush">
 								<?php 
 								foreach($section->members as $member){ 
-									if($member['role']['id'] > 1){
+									//if($member->section->role->id > 1){
 										continue;
-									}
+									//}
 									?>
 								<div class="list-group-item">
 									<?php echo $member['name'] ?> <span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member['name'] ?>" data-section='{"name": "<?php echo $section->name ?>", "id":
@@ -61,9 +61,9 @@ require_once('../head.php');
 							<div class="list-group list-group-flush">
 								<?php 
 								foreach($section->members as $member){ 
-									if($member['role']['id'] == 1){
+									//if($member['role']['id'] == 1){
 										continue;
-									}
+									//}
 									?>
 								<div class="list-group-item">
 									<?php echo $member['name'] ?>
@@ -153,13 +153,13 @@ require_once('../head.php');
 			<div class="modal-dialog modal-lg">
 				<div class="modal-content">
 					<div class="modal-header">
-						<h1 class="modal-title fs-4">Create Section</h1>
+						<h1 class="modal-title fs-4">Add Member</h1>
 						<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 					</div>
 					<div class="modal-body">
-						<div class="list-group list-group-horizontal">
-							<a class="list-group-item list-group-item-action" id="newMember" href="member.php?section=">New Member</a>
-							<a class="list-group-item list-group-item-action">Existing Member</a>
+						<div class="list-group list-group-horizontal text-center fs-2">
+							<a class="list-group-item list-group-item-action py-5" id="newMember" href="member.php?section=">New Member</a>
+							<a class="list-group-item list-group-item-action py-5">Existing Member</a>
 						</div>
 					</div>
 				</div>

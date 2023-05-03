@@ -4,6 +4,7 @@ require_once('DB.php');
 require_once('Member.php');
 
 require_once('DTO/SectionDto.php');
+require_once('DTO/MemberSectionDto.php');
 
 class Section{
 	
@@ -57,7 +58,7 @@ class Section{
 		}
 	}
 
-	static function getCurrentForMember($memberID, $includeMembers = false, $con = null){
+	static function getCurrentForMember($memberID, $con = null){
 		$openedConnection = false;
 		if($con == null){
 			$openedConnection = true;
@@ -65,14 +66,10 @@ class Section{
 		}
 
 		$section = null;
-		$result = DB::executeQueryForSingle("SELECT s.* FROM MemberSections ms INNER JOIN Sections s ON s.ID = ms.SectionID WHERE ms.MemberID = ? AND ms.StartDate <= NOW() AND IFNULL(ms.EndDate, NOW()) >= NOW()", $con, "s", $memberID);
+		$result = DB::executeQueryForSingle("SELECT s.ID AS SectionID, s.Name AS SectionName, r.ID AS RoleID, r.Name AS RoleName, r.IsStaff AS RoleIsStaff FROM MemberSections ms INNER JOIN Sections s ON s.ID = ms.SectionID INNER JOIN Roles r ON r.ID = ms.RoleID WHERE ms.MemberID = ? AND ms.StartDate <= NOW() AND IFNULL(ms.EndDate, NOW()) >= NOW()", $con, "s", $memberID);
 
 		if($result != null){
-			$section = SectionDto::createFromDataset($result);
-
-			if($includeMembers){
-				$section->members = Member::getBySection($section->ID, $con);
-			}
+			$section = MemberSectionDto::createFromDataset($result);
 		}
 
 		if($openedConnection){
@@ -99,7 +96,7 @@ class Section{
 		return $section;
 	}
 
-	static function addMember($sectionID, $memberID, $con = null){
+	static function addMember($sectionID, $roleID, $memberID, $con = null){
 		$openedConnection = false;
 		if($con == null){
 			$openedConnection = true;
@@ -108,9 +105,9 @@ class Section{
 
 		$skip = false;
 
-		$section = self::getCurrentForMember($memberID, false, $con);
+		$section = self::getCurrentForMember($memberID, $con);
 		if($section != null){
-			if($section->ID == $sectionID){
+			if($section->ID == $sectionID && $section->role->ID == $roleID){
 				$skip = true;
 			} else {
 				self::removeMember($section->ID, $memberID, $con);
@@ -118,7 +115,7 @@ class Section{
 		}
 
 		if(!$skip){
-			DB::executeQuery("INSERT INTO MemberSections (MemberID, SectionID, StartDate) VALUES (?, ?, NOW())", $con, "si", $memberID, $sectionID);
+			DB::executeQuery("INSERT INTO MemberSections (MemberID, RoleID, SectionID, StartDate) VALUES (?, ?, ?, NOW())", $con, "sii", $memberID, $roleID, $sectionID);
 		}
 
 		if($openedConnection){
