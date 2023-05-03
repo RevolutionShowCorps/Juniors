@@ -1,14 +1,19 @@
 <?php
 require_once("../secure.php");
 
+require_once("../lib/DB.php");
 require_once("../lib/Section.php");
 
-$sections = Section::getAll(true);
+$con = DB::connect();
 
 if(isset($_POST['create'])){
-	Section::create($_POST['name']);
+	Section::create($_POST['name'], $con);
 	header("Location: ?saved=1");
 }
+
+$sections = Section::getAll(true, $con);
+$roles = DB::executeQuery("SELECT * FROM Roles", $con);
+DB::close($con);
 
 $title = "Section Administration";
 require_once('../head.php');
@@ -39,17 +44,25 @@ require_once('../head.php');
 							<div class="card-header button-header">Members <button class="btn btn-primary add-member" data-section="<?php echo $section->ID ?>">Add</button></div>
 							<div class="list-group list-group-flush">
 								<?php 
+								$members = 0;
 								foreach($section->members as $member){ 
-									//if($member->section->role->id > 1){
+									if($member->section->role->isStaff){
 										continue;
-									//}
+									}
+									$members++;
 									?>
 								<div class="list-group-item">
-									<?php echo $member['name'] ?> <span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member['name'] ?>" data-section='{"name": "<?php echo $section->name ?>", "id":
+									<?php echo $member->fullName() ?> <span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member->fullName() ?>" data-section='{"name": "<?php echo $section->name ?>", "id":
 											<?php echo $section->ID ?>, "roleID":
-											<?php echo $member['role']['id'] ?>}'>Edit
-										</a> | <a href="member.php">View</a></span>
+											<?php echo $member->section->role->ID ?>}'>Edit
+										</a> | <a href="member.php?id=<?php echo $member->ID ?>">View</a></span>
 								</div>
+								<?php 
+								} 
+
+								if($members == 0){
+									?>
+								<div class="list-group-item list-group-item-warning text-center">No members added</div>
 								<?php } ?>
 							</div>
 						</div>
@@ -60,20 +73,29 @@ require_once('../head.php');
 							<div class="card-header button-header">Instructors <button class="btn btn-primary add-member" data-section="<?php echo $section->ID ?>">Add</button></div>
 							<div class="list-group list-group-flush">
 								<?php 
+								$instructors = 0;
 								foreach($section->members as $member){ 
-									//if($member['role']['id'] == 1){
+									if(!$member->section->role->isStaff){
 										continue;
-									//}
+									}
+									$instructors++;
 									?>
 								<div class="list-group-item">
-									<?php echo $member['name'] ?>
-									<?php if($member['role']['id'] > 2){ ?>
+									<?php echo $member->fullName() ?>
 									<span class="badge text-bg-primary">
-										<?php echo $member['role']['name'] ?>
+										<?php echo $member->section->role->name ?>
 									</span>
-									<?php } ?>
-									<span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member['name'] ?>" data-section="<?php echo $section->fullName ?>">Edit</a> | <a href="member.php">View</a></span>
+									<span class="hover float-end"><a href="#" class="edit-member" data-name="<?php echo $member->fullName() ?>" data-section='{"name": "<?php echo $section->name ?>", "id":
+											<?php echo $section->ID ?>, "roleID":
+											<?php echo $member->section->role->ID ?>}'>Edit
+										</a> | <a href="member.php?id=<?php echo $member->ID ?>">View</a></span>
 								</div>
+								<?php 
+								}
+								
+								if($instructors == 0){
+								?>
+								<div class="list-group-item list-group-item-danger text-center">No instructors added</div>
 								<?php } ?>
 							</div>
 						</div>
@@ -99,7 +121,9 @@ require_once('../head.php');
 					<div class="form-floating mb-3">
 						<select class="form-select" id="editNewSection" required>
 							<option value="">-- Please Select --</option>
-							<option value="1">Brass</option>
+							<?php foreach($sections as $section){ ?>
+								<option value="<?php echo $section->ID ?>"><?php echo $section->name ?></option>
+							<?php } ?>
 						</select>
 						<label for="section">New Section</label>
 					</div>
@@ -107,10 +131,9 @@ require_once('../head.php');
 					<div class="form-floating mb-3">
 						<select class="form-select" id="editRole" required>
 							<option value="">-- Please Select --</option>
-							<option value="1">Member</option>
-							<option value="2">Instructor</option>
-							<option value="3">Junior Instructor</option>
-							<option value="3">Caption Head</option>
+							<?php foreach($roles as $role){ ?>
+							<option value="<?php echo $role['ID'] ?>"><?php echo $role['Name'] ?></option>
+							<?php } ?>
 						</select>
 						<label for="role">Role</label>
 					</div>
@@ -178,6 +201,9 @@ require_once('../head.php');
 		});
 
 		function showEditModal(name, section) {
+			console.log(name);
+			console.log(section);
+
 			document.getElementById("editName").innerHTML = name;
 			document.getElementById("editSection").innerHTML = section.name;
 			document.getElementById("editNewSection").value = section.id;

@@ -48,6 +48,7 @@ class Member{
 
 		foreach($result as $row){
 			$member = MemberDto::createFromDataset($row);
+			$member->section = Section::getCurrentForMember($member->ID, false, $con);
 			$members[] = $member;
 		}
 
