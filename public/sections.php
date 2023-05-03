@@ -1,5 +1,5 @@
 <?php
-require_once("secure.php");
+require_once("../secure.php");
 
 $sections = array(
 	array(
@@ -95,7 +95,7 @@ $sections = array(
 );
 
 $title = "Section Administration";
-require_once('head.php');
+require_once('../head.php');
 ?>
 
 <body>

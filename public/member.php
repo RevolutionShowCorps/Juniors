@@ -1,10 +1,10 @@
 <?php
-require_once("secure.php");
+require_once("../secure.php");
 
-require_once(__DIR__ . "/lib/DB.php");
-require_once(__DIR__ . "/lib/Member.php");
-require_once(__DIR__ . "/lib/Contact.php");
-require_once(__DIR__ . "/lib/Validation.php");
+require_once(__DIR__ . "/../lib/DB.php");
+require_once(__DIR__ . "/../lib/Member.php");
+require_once(__DIR__ . "/../lib/Contact.php");
+require_once(__DIR__ . "/../lib/Validation.php");
 
 $validationErrors = array();
 
@@ -106,7 +106,7 @@ $relationships = DB::executeQuery("SELECT * FROM RelationshipTypes ORDER BY Sort
 DB::close($con);
 
 $title = $member->ID == -1 ? "Create Member" : $member->fullName();
-require_once('head.php');
+require_once('../head.php');
 ?>
 
 <body>

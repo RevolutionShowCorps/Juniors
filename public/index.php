@@ -1,5 +1,5 @@
 <?php
-require_once(__DIR__ . "/lib/DB.php");
+require_once(__DIR__ . "/../lib/DB.php");
 session_start();
 
 function doLogin($email, $password){
@@ -28,7 +28,7 @@ if(isset($_POST['email']) && isset($_POST['password'])){
 }
 
 $title = "Log In";
-require_once("head.php")
+require_once("../head.php")
 ?>
 
 <body>

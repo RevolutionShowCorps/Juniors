@@ -1,9 +1,9 @@
 <?php
-require_once("secure.php");
+require_once("../secure.php");
 
 $name = "Luke Taylor";
 $title = "Sub History for " . $name;
-require_once('head.php');
+require_once('../head.php');
 ?>
 
 <body>

@@ -1,5 +1,5 @@
 <?php
-require_once("secure.php");
+require_once("../secure.php");
 
 function getLinkForMonth($date, $movement){
 	$target = clone $date;
@@ -24,7 +24,7 @@ if(isset($_GET['year'])){
 $date = new DateTime($year . "-" . $month . "-01");
 
 $title = "Event Administration";
-require_once('head.php');
+require_once('../head.php');
 ?>
 
 <body>
