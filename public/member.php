@@ -4,6 +4,8 @@ require_once("../secure.php");
 require_once(__DIR__ . "/../lib/DB.php");
 require_once(__DIR__ . "/../lib/Member.php");
 require_once(__DIR__ . "/../lib/Contact.php");
+require_once(__DIR__ . "/../lib/Section.php");
+
 require_once(__DIR__ . "/../lib/Validation.php");
 
 $validationErrors = array();
@@ -67,6 +69,8 @@ if(!empty($_POST)){
 				updateMember($member, $con);
 			}
 
+			Section::addMember($_POST['section'], $member->ID, $con);
+
 			$result = true;
 		}
 	} else if(isset($_POST['contact'])){
@@ -101,6 +105,7 @@ if(!empty($_POST)){
 }
 
 $genders = DB::executeQuery("SELECT * FROM Genders ORDER BY Name", $con);
+$sections = Section::getAll(false, $con);
 $relationships = DB::executeQuery("SELECT * FROM RelationshipTypes ORDER BY SortOrder, Name", $con);
 
 DB::close($con);
@@ -118,9 +123,9 @@ require_once('../head.php');
 
 		<form method="post">
 			<?php if(!empty($validationErrors)){ ?>
-				<div class="alert alert-danger">Invalid details. Please try again</div>
+			<div class="alert alert-danger">Invalid details. Please try again</div>
 			<?php } else if(isset($_GET['saved'])){ ?>
-				<div class="alert alert-success">Member saved!</div>
+			<div class="alert alert-success">Member saved!</div>
 			<?php } ?>
 
 			<div class="card mb-3">
@@ -158,7 +163,7 @@ require_once('../head.php');
 
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth" <?php if($member->DOB != null){ ?>value="<?php echo $member->DOB->format('Y-m-d') ?>" <?php } ?>required>
+								<input type="date" class="form-control" id="dob" name="dob" placeholder="Date of Birth" <?php if($member->DOB != null){ ?>value="<?php echo $member->DOB->format('Y-m-d') ?>"<?php } ?>required>
 								<label for="dob">Date of Birth</label>
 							</div>
 						</div>
@@ -182,8 +187,7 @@ require_once('../head.php');
 					<div class="row row-cols-1 row-cols-md-2">
 						<div class="col">
 							<div class="form-floating mb-3">
-								<input type="date" class="form-control" id="tetanus" name="tetanus" placeholder="Last Tetanus Jab" <?php if($member->lastTetanus != null){ ?>value="<?php echo $member->lastTetanus->format('Y-m-d') ?>"
-								<?php } ?>>
+								<input type="date" class="form-control" id="tetanus" name="tetanus" placeholder="Last Tetanus Jab" <?php if($member->lastTetanus != null){ ?>value="<?php echo $member->lastTetanus->format('Y-m-d') ?>"<?php } ?>>
 								<label for="tetanus">Last Tetanus Jab</label>
 							</div>
 						</div>
@@ -204,6 +208,21 @@ require_once('../head.php');
 				</div>
 			</div>
 
+			<div class="card">
+				<div class="card-header">Section</div>
+				<div class="card-body">
+					<div class="form-floating mb-3">
+						<select name="section" id="section" class="form-control" required>
+							<option value="">-- Please Select --</option>
+							<?php foreach($sections as $section){ ?>
+							<option value="<?php echo $section->ID ?>"<?php if((isset($_GET['section']) && $_GET['section'] == $section->ID) || (!isset($_GET['section']) && isset($member->section) && $member->section->ID == $section->ID)){ ?> selected<?php } ?>><?php echo $section->name ?></option>
+							<?php } ?>
+						</select>
+						<label for="section">Section</label>
+					</div>
+				</div>
+			</div>
+
 			<div class="text-center my-3">
 				<button name="update" class="btn btn-lg btn-success">Save</button>
 			</div>
@@ -213,109 +232,109 @@ require_once('../head.php');
 		if($member->ID != -1){
 			if(count($member->contacts) == 0){ 
 		?>
-			<div class="alert alert-danger">No contacts registered! <button class="btn btn-primary add-contact">Add One Now</button></div>
-			<?php 
+		<div class="alert alert-danger">No contacts registered! <button class="btn btn-primary add-contact">Add One Now</button></div>
+		<?php 
 			}
 
 			if($member->doctor == null){
 				?>
-			<div class="alert alert-danger">No doctor's surgery on record! <button class="btn btn-primary add-doctor">Add One Now</button></div>
-			<?php } ?>
+		<div class="alert alert-danger">No doctor's surgery on record! <button class="btn btn-primary add-doctor">Add One Now</button></div>
+		<?php } ?>
 
 
-			<div class="row row-cols-1 row-cols-md-2">
-				<?php 
+		<div class="row row-cols-1 row-cols-md-2">
+			<?php 
 						for($i = 0; $i < count($member->contacts); $i++){ 
 							$contact = $member->contacts[$i]; 
 					?>
-				<div class="col mb-3">
-					<div class="card h-100">
-						<div class="card-header d-flex align-items-center">Contact
-							<?php echo $i + 1 ?> <button data-contact='<?php echo json_encode($contact) ?>' class="btn btn-primary edit-contact ms-auto">Edit</button>
-						</div>
-						<table class="table table-hover details">
-							<tbody>
-								<tr>
-									<td>Name</td>
-									<td>
-										<?php echo $contact->fullName() ?>
-									</td>
-								</tr>
-								<tr>
-									<td>Relationship</td>
-									<td>
-										<?php echo $contact->relationship->name ?>
-									</td>
-								</tr>
-								<tr>
-									<td>Mobile</td>
-									<td>
-										<?php echo $contact->mobile ?>
-									</td>
-								</tr>
-								<tr>
-									<td>Landline</td>
-									<td>
-										<?php echo $contact->landline ?>
-									</td>
-								</tr>
-								<tr>
-									<td>Email</td>
-									<td><a href="mailto:<?php echo $contact->email ?>">
-											<?php echo $contact->email ?>
-										</a></td>
-								</tr>
-							</tbody>
-						</table>
+			<div class="col mb-3">
+				<div class="card h-100">
+					<div class="card-header d-flex align-items-center">Contact
+						<?php echo $i + 1 ?> <button data-contact='<?php echo json_encode($contact) ?>' class="btn btn-primary edit-contact ms-auto">Edit</button>
 					</div>
+					<table class="table table-hover details">
+						<tbody>
+							<tr>
+								<td>Name</td>
+								<td>
+									<?php echo $contact->fullName() ?>
+								</td>
+							</tr>
+							<tr>
+								<td>Relationship</td>
+								<td>
+									<?php echo $contact->relationship->name ?>
+								</td>
+							</tr>
+							<tr>
+								<td>Mobile</td>
+								<td>
+									<?php echo $contact->mobile ?>
+								</td>
+							</tr>
+							<tr>
+								<td>Landline</td>
+								<td>
+									<?php echo $contact->landline ?>
+								</td>
+							</tr>
+							<tr>
+								<td>Email</td>
+								<td><a href="mailto:<?php echo $contact->email ?>">
+										<?php echo $contact->email ?>
+									</a></td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
-				<?php 
+			</div>
+			<?php 
 				}
 	
 				if(count($member->contacts) == 1){
 					?>
-				<div class="col mb-3">
-					<div class="card card-body h-100 d-flex align-items-center justify-content-center">
-						<button class="btn btn-primary add-contact stretched-link">Add a Second Contact</button>
-					</div>
+			<div class="col mb-3">
+				<div class="card card-body h-100 d-flex align-items-center justify-content-center">
+					<button class="btn btn-primary add-contact stretched-link">Add a Second Contact</button>
 				</div>
-				<?php
+			</div>
+			<?php
 				}
 			
 				if($member->doctor != null){
 				?>
 
-				<div class="col mb-3">
-					<div class="card">
-						<div class="card-header button-header">Doctor <button data-doctor='<?php echo json_encode($member->doctor) ?>' class="btn btn-primary edit-doctor">Edit</button></div>
-						<table class="table table-hover details">
-							<tbody>
-								<tr>
-									<td>Name</td>
-									<td>
-										<?php echo $member->doctor['FirstName'] . " " . $member->doctor['LastName'] ?>
-									</td>
-								</tr>
-								<tr>
-									<td>Surgery</td>
-									<td>
-										<?php echo $member->doctor['SurgeryName'] ?>
-									</td>
-								</tr>
-								<tr>
-									<td>Phone</td>
-									<td>
-										<?php echo $member->doctor['PhoneNumber'] ?>
-									</td>
-								</tr>
-							</tbody>
-						</table>
-					</div>
+			<div class="col mb-3">
+				<div class="card">
+					<div class="card-header button-header">Doctor <button data-doctor='<?php echo json_encode($member->doctor) ?>' class="btn btn-primary edit-doctor">Edit</button></div>
+					<table class="table table-hover details">
+						<tbody>
+							<tr>
+								<td>Name</td>
+								<td>
+									<?php echo $member->doctor['FirstName'] . " " . $member->doctor['LastName'] ?>
+								</td>
+							</tr>
+							<tr>
+								<td>Surgery</td>
+								<td>
+									<?php echo $member->doctor['SurgeryName'] ?>
+								</td>
+							</tr>
+							<tr>
+								<td>Phone</td>
+								<td>
+									<?php echo $member->doctor['PhoneNumber'] ?>
+								</td>
+							</tr>
+						</tbody>
+					</table>
 				</div>
-				<?php } ?>
 			</div>
 			<?php } ?>
 		</div>
+		<?php } ?>
+	</div>
 
 	<form method="post">
 		<div class="modal fade" id="contact" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
@@ -440,7 +459,7 @@ require_once('../head.php');
 			showContactModal(-1, "Add A Contact", "", "", "", "", "", "");
 		}
 
-		function editContact(el){
+		function editContact(el) {
 			const data = JSON.parse(el.dataset.contact);
 			showContactModal(data.ID, `Edit Contact ${data.firstName} ${data.lastName}`, data.firstName, data.lastName, data.mobile, data.landline, data.email, data.relationship.ID);
 		}
@@ -458,7 +477,7 @@ require_once('../head.php');
 			contactModal.show();
 		}
 
-		function editDoctor(el){
+		function editDoctor(el) {
 			const data = JSON.parse(el.dataset.doctor);
 			showDoctorModal(data.ID, "Edit Doctor", data.FirstName, data.LastName, data.PhoneNumber, data.SurgeryName);
 		}

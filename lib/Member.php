@@ -26,6 +26,7 @@ class Member{
 			}
 
 			$member->doctor = DB::executeQueryForSingle("SELECT * FROM Doctors WHERE ID = ?", $con, "i", $result['DoctorID']);
+			$member->section = Section::getCurrentForMember($member->ID, false, $con);
 		}
 
 		if($openedConnection){
@@ -43,7 +44,7 @@ class Member{
 		}
 
 		$members = array();
-		$result = DB::executeQuery("SELECT m.* FROM MemberSections ms INNER JOIN Members m ON m.ID = ms.MemberID WHERE ms.SectionID = ? AND ms.StartDate <= NOW() AND IFNULL(ms.EndDate, NOW()) <= NOW()", $con, "i", $sectionID);
+		$result = DB::executeQuery("SELECT m.* FROM MemberSections ms INNER JOIN Members m ON m.ID = ms.MemberID WHERE ms.SectionID = ? AND ms.StartDate <= NOW() AND IFNULL(ms.EndDate, NOW()) >= NOW()", $con, "i", $sectionID);
 
 		foreach($result as $row){
 			$member = MemberDto::createFromDataset($row);

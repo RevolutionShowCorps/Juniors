@@ -14,6 +14,7 @@ class MemberDto{
 	public $canDressWounds;
 	public $canAdministerMedication;
 	
+	public $section = null;
 	public $doctor = null;
 	public $contacts = array();
 
