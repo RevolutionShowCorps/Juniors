@@ -23,4 +23,18 @@ class Utils{
 
 		return $dateTime->format("Y-m-d H:i:s");
 	}
+
+	static function truncateText($text, $len = 50){
+		if(strlen($text) > $len){
+			$wrapped = wordwrap($text, $len, ";_;");
+			$parts = explode(";_;", $wrapped);
+			$text = $parts[0] . "...";
+		}
+
+		return $text;
+	}
+
+	static function getRandomColour(){
+		return sprintf('#%06X', mt_rand(0, 0xFFFFFF));
+	}
 }
