@@ -6,6 +6,7 @@ require_once(__DIR__ . "/DTO/MemberDto.php");
 require_once(__DIR__ . "/Utils.php");
 
 require_once(__DIR__ . "/Contact.php");
+require_once(__DIR__ . "/Section.php");
 
 class Member extends BaseAccessor {
 	static function getByID($id, $con = null){

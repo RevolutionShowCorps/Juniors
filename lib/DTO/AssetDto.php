@@ -9,6 +9,7 @@ class AssetDto{
 	public $section;
 	public $value;
 	public $hireCost;
+	public $currentHire = null;
 
 	function __construct($id, $name, $description, $section, $value, $cost){
 		$this->ID = $id;
