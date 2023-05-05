@@ -67,10 +67,10 @@ class Section extends BaseAccessor{
 		return $section;
 	}
 
-	static function create($name, $con = null){
+	static function create($name, $colour, $con = null){
 		$openedConnection = self::ensureConnected($con);
 		
-		DB::executeQuery("INSERT INTO Sections (Name) VALUES (?)", $con, "s", $name);
+		DB::executeQuery("INSERT INTO Sections (Name, Colour) VALUES (?, ?)", $con, "ss", $name, $colour);
 		$section = self::getById($con->insert_id);
 		
 		if($openedConnection){

@@ -7,7 +7,7 @@ require_once("../lib/Section.php");
 $con = DB::connect();
 
 if(isset($_POST['create'])){
-	Section::create($_POST['name'], $con);
+	Section::create($_POST['name'], $_POST['colour'], $con);
 	header("Location: ?saved=1");
 } else if(isset($_POST['edit'])){
 	Section::addMember($_POST['newSection'], $_POST['newRole'], $_POST['member'], $con);
@@ -37,7 +37,7 @@ require_once('../head.php');
 		foreach($sections as $section){ 
 		?>
 		<div class="card mb-3">
-			<div class="card-header">
+			<div class="card-header" style="background-color: <?php echo $section->colour ?>">
 				<?php echo $section->name ?>
 			</div>
 			<div class="card-body">
@@ -165,6 +165,11 @@ require_once('../head.php');
 						<div class="form-floating mb-3">
 							<input type="text" name="name" id="name" class="form-control" placeholder="New Section Name" required />
 							<label for="name">New Section Name</label>
+						</div>
+
+						<div class="form-group mb-3">
+							<label for="colour">Colour</label>
+							<input type="color" class="form-control form-control-color" id="colour" name="colour" required />
 						</div>
 					</div>
 					<div class="modal-footer">
