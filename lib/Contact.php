@@ -1,14 +1,12 @@
 <?php
 
+require_once('BaseAccessor.php');
+
 require_once(__DIR__ . '/DTO/ContactDTO.php');
 
-class Contact{
+class Contact extends BaseAccessor {
 	static function getForMemberID($id, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 
 		$contacts = array();
 		$result = DB::executeQuery("SELECT c.*, r.Name AS Relationship, mc.RelationshipTypeID FROM MemberContacts mc INNER JOIN Contacts c ON c.ID = mc.ContactID INNER JOIN RelationshipTypes r ON r.ID = mc.RelationshipTypeID WHERE mc.MemberID = ? ORDER BY r.SortOrder, c.LastName, c.FirstName", $con, "s", $id);
@@ -26,11 +24,7 @@ class Contact{
 	}
 
 	static function getByID($id, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 
 		$contact = null;
 		$result = DB::executeQueryForSingle("SELECT c.*, r.Name AS Relationship, mc.RelationshipTypeID FROM MemberContacts mc INNER JOIN Contacts c ON c.ID = mc.ContactID INNER JOIN RelationshipTypes r ON r.ID = mc.RelationshipTypeID WHERE mc.ContactID = ?", $con, "s", $id);
@@ -47,11 +41,7 @@ class Contact{
 	}
 
 	static function createForMember($id, $fname, $lname, $mobile, $landline, $email, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 
 		$contactID = Utils::get_guid();
 		DB::executeQuery("INSERT INTO Contacts (ID, FirstName, LastName, Mobile, Landline, Email) VALUES (?, ?, ?, ?, ?, ?)", $con, "ssssss", $contactID, $_POST['fname'], $_POST['lname'], $_POST['mobile'], $_POST['landline'], $_POST['email']);
@@ -68,11 +58,7 @@ class Contact{
 	}
 
 	static function update($contact, $relationship = null, $memberID = null, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 
 		DB::executeQuery("UPDATE Contacts SET FirstName = ?, LastName = ?, Mobile = ?, Landline = ?, Email = ? WHERE ID = ?", $con, "ssssss", $contact->firstName, $contact->lastName, $contact->mobile, $contact->landline, $contact->email, $contact->ID);
 

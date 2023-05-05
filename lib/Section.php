@@ -1,19 +1,15 @@
 <?php
 
-require_once('DB.php');
+require_once('BaseAccessor.php');
 require_once('Member.php');
 
 require_once('DTO/SectionDto.php');
 require_once('DTO/MemberSectionDto.php');
 
-class Section{
+class Section extends BaseAccessor{
 	
 	static function getAll($includeMembers = false, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 		
 		$sections = array();
 		$result = DB::executeQuery("SELECT * FROM Sections ORDER BY Name", $con);
@@ -36,11 +32,7 @@ class Section{
 	}
 
 	static function getById($id, $includeMembers = false, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 
 		$section = null;
 		$result = DB::executeQueryForSingle("SELECT * FROM Sections WHERE ID = ?", $con, "i", $id);
@@ -59,11 +51,7 @@ class Section{
 	}
 
 	static function getCurrentForMember($memberID, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 
 		$section = null;
 		$result = DB::executeQueryForSingle("SELECT s.ID AS SectionID, s.Name AS SectionName, r.ID AS RoleID, r.Name AS RoleName, r.IsStaff AS RoleIsStaff FROM MemberSections ms INNER JOIN Sections s ON s.ID = ms.SectionID INNER JOIN Roles r ON r.ID = ms.RoleID WHERE ms.MemberID = ? AND ms.StartDate <= NOW() AND IFNULL(ms.EndDate, NOW()) >= NOW()", $con, "s", $memberID);
@@ -80,11 +68,7 @@ class Section{
 	}
 
 	static function create($name, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 		
 		DB::executeQuery("INSERT INTO Sections (Name) VALUES (?)", $con, "s", $name);
 		$section = self::getById($con->insert_id);
@@ -97,12 +81,7 @@ class Section{
 	}
 
 	static function addMember($sectionID, $roleID, $memberID, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
-
+		$openedConnection = self::ensureConnected($con);
 		$skip = false;
 
 		$section = self::getCurrentForMember($memberID, $con);
@@ -124,11 +103,7 @@ class Section{
 	}
 
 	static function removeMember($sectionID, $memberID, $con = null){
-		$openedConnection = false;
-		if($con == null){
-			$openedConnection = true;
-			$con = DB::connect();
-		}
+		$openedConnection = self::ensureConnected($con);
 
 		DB::executeQuery("UPDATE MemberSections SET EndDate = DATE_SUB(NOW(), INTERVAL 1 MINUTE) WHERE SectionID = ? AND MemberID = ? AND (EndDate IS NULL OR EndDate > NOW())", $con, "is", $sectionID, $memberID);
 
